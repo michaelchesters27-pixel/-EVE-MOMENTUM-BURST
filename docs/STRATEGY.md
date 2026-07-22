@@ -1,4 +1,4 @@
-# Strategy specification — v2.02
+# Strategy specification — v2.03
 
 ## Moving straddle
 
@@ -12,7 +12,7 @@ The first pending order that triggers becomes the active direction. Additional s
 
 ## Stop-and-reverse
 
-While a ladder is active, only the opposite pending stop is retained. It is aligned to the protected stop or invalidation area. If both directions temporarily coexist on the hedging account, v2.02 closes one old-direction leg per confirmed broker cycle and retains the newest direction.
+While a ladder is active, only the opposite pending stop is retained. It is aligned to the protected stop or invalidation area. If both directions temporarily coexist on the hedging account, v2.03 closes one old-direction leg per confirmed broker cycle and retains the newest direction.
 
 ## Individual protection
 

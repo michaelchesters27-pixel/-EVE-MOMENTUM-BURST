@@ -1,4 +1,4 @@
-EVE Momentum Burst v2.02
-Engine: Moving Straddle + Rolling Momentum Ladder — Transaction-Safe Execution
-MT5: EVE_Momentum_Burst_EA_v2.02.mq5
-Railway: v2.0.2
+EVE Momentum Burst v2.03
+Engine: Moving Straddle + Rolling Momentum Ladder — Demo Test Mode + Transaction-Safe Execution
+MT5: EVE_Momentum_Burst_EA_v2.03.mq5
+Railway: v2.0.3

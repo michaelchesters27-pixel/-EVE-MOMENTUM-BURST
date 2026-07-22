@@ -1,4 +1,4 @@
-# EVE MOMENTUM BURST v2.02
+# EVE MOMENTUM BURST v2.03
 
 A complete replacement for the EVE Momentum Burst demo project. The engine reconstructs the visible moving-straddle, stop-and-reverse, rolling-ladder and canary-banking behaviour observed in the supplied screenshots. It does not contain the original commercial EA's private source code.
 
@@ -15,9 +15,13 @@ A complete replacement for the EVE Momentum Burst demo project. The engine recon
 - dashboard-controlled lot size, initial legs, maximum positions and total lots
 - detailed basket, leg, order, scan and banking records
 
-## v2.02 execution repair
+## v2.03 demo testing control
 
-v2.02 replaces the aggressive cancel-and-recreate loop from v2.01 with a broker-aware synchronisation layer:
+v2.03 keeps complete loss and performance tracking but adds a dashboard-controlled **Demo testing mode**, enabled by default. While it is ON, consecutive losses, daily bot P/L and basket count remain visible and are stored for analysis, but they cannot block new entries. Manual pause, news lock and emergency stop remain active. A **Reset testing counters** button clears the current EA day counters without deleting historical basket, leg, order, scan or banking records.
+
+## v2.03 execution repair
+
+v2.03 replaces the aggressive cancel-and-recreate loop from v2.01 with a broker-aware synchronisation layer:
 
 - only one trade request is released at a time
 - pending orders are modified in place where possible
@@ -33,7 +37,7 @@ v2.02 replaces the aggressive cancel-and-recreate loop from v2.01 with a broker-
 
 ## Repository structure
 
-- `mt5/EVE_Momentum_Burst_EA_v2.02.mq5` — complete EA source
+- `mt5/EVE_Momentum_Burst_EA_v2.03.mq5` — complete EA source
 - `railway/` — dashboard, controls, persistence, CSV exports and analysis
 - `supabase/schema.sql` — optional permanent evidence database
 - `docs/INSTALL-EASY.md` — deployment steps

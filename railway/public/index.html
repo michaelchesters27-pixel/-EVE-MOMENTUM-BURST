@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EVE Momentum Burst v2.02</title>
+  <title>EVE Momentum Burst v2.03</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -60,6 +60,7 @@
   <section class="panel">
     <div class="section-head"><div><p class="eyebrow">LOT AND LADDER CONTROL</p><h2>Settings for new trades</h2></div><span id="settingsVersion" class="muted">Settings v—</span></div>
     <div class="settings-grid">
+      <label class="switch-row"><span>Demo testing mode — ignore automatic loss/profit/basket locks</span><input id="testingMode" type="checkbox"></label>
       <label><span>Fixed lot per position</span><input id="fixedLot" type="number" min="0.01" step="0.01"></label>
       <label><span>Initial positions</span><input id="initialPositions" type="number" min="1" step="1"></label>
       <label><span>Maximum open positions</span><input id="maxPositions" type="number" min="1" step="1"></label>
@@ -67,8 +68,8 @@
       <label class="switch-row"><span>Balance-scaled lot mode</span><input id="useEquityScaling" type="checkbox"></label>
       <label><span>Equity for each 0.01 lot</span><input id="equityPer001Lot" type="number" min="10" step="10"></label>
     </div>
-    <div class="buttons"><button id="applySettings" class="positive">Apply settings</button></div>
-    <p class="notice">Changes apply to future entries. Existing positions are never resized.</p>
+    <div class="buttons"><button id="applySettings" class="positive">Apply settings</button><button data-action="RESET_TEST_COUNTERS">Reset testing counters</button></div>
+    <p id="testingModeNotice" class="notice">Demo testing mode is ON: consecutive losses, daily P/L and basket count are tracked but cannot stop new entries. Manual pause, news lock and emergency stop still work.</p>
   </section>
 
   <section class="two-col">
@@ -100,7 +101,7 @@
         <div><span>Equity</span><strong id="equity">—</strong></div>
         <div><span>Daily bot P/L</span><strong id="dailyPnl">—</strong></div>
         <div><span>Baskets today</span><strong id="basketsToday">—</strong></div>
-        <div><span>Consecutive losses</span><strong id="lossStreak">—</strong></div>
+        <div><span>Consecutive losses (tracked)</span><strong id="lossStreak">—</strong></div>
         <div><span>Algo trading</span><strong id="algo">—</strong></div>
         <div><span>Spread</span><strong id="spread">—</strong></div>
         <div><span>Extension</span><strong id="extension">—</strong></div>

@@ -28,9 +28,11 @@ function statsRows(id, items, includePf = false) {
 function fillSettings(s, force = false) {
   if (!force && loadedSettingsVersion === Number(s.version)) return;
   loadedSettingsVersion = Number(s.version);
+  $('testingMode').checked = Boolean(s.testingMode);
   $('fixedLot').value = number(s.fixedLot, 2); $('initialPositions').value = s.initialPositions; $('maxPositions').value = s.maxPositions;
   $('maxTotalLots').value = number(s.maxTotalLots, 2); $('useEquityScaling').checked = Boolean(s.useEquityScaling); $('equityPer001Lot').value = s.equityPer001Lot;
   text('settingsVersion', `Settings v${s.version}`);
+  text('testingModeNotice', s.testingMode ? 'Demo testing mode is ON: consecutive losses, daily P/L and basket count are tracked but cannot stop new entries. Manual pause, news lock and emergency stop still work.' : 'Demo testing mode is OFF: configured daily and consecutive-loss protections can stop new entries.');
 }
 function render(payload) {
   const { state, settings, performance, recentScans, recentBaskets, recentLegs, recentOrders, recentBanks, recentEvents } = payload;
@@ -50,7 +52,7 @@ function render(payload) {
   setMoney('floatingProfit', ea.floatingProfit); text('positionCounts', `${ea.positionCount || 0} / ${ea.pendingCount || 0}`); text('totalLots', number(ea.totalLots,2)); text('averageEntry', Number(ea.averageEntry)>0 ? number(ea.averageEntry,2) : '—'); text('protectedStop', Number(ea.protectedStop)>0 ? number(ea.protectedStop,2) : '—');
   setMoney('peakProfit', ea.peakBasketProfit); setMoney('basketMae', ea.basketMae); text('newestTicket', ea.newestTicket || '—'); text('newestProfit', `${money(ea.newestLegProfit)} / ${money(ea.newestLegPeak)}`); text('newestAge', seconds(ea.newestLegAgeSeconds));
   text('bankCandidate', ea.bankCandidate ? 'YES' : 'NO'); $('bankCandidate').className = ea.bankCandidate ? 'warn-text' : 'good-text'; text('bankReason', ea.bankReason || 'No banking signal.'); text('closeInfo', ea.closePending ? `${ea.closeReason || 'Close pending'} • attempts ${ea.closeAttempts || 0}` : 'No close pending.');
-  setMoney('balance', ea.balance); setMoney('equity', ea.equity); setMoney('dailyPnl', ea.dailyPnl); text('basketsToday', ea.basketsToday ?? '—'); text('lossStreak', ea.consecutiveLosses ?? '—'); text('algo', ea.algoAllowed ? 'ALLOWED' : 'BLOCKED'); $('algo').className = ea.algoAllowed ? 'good-text' : 'bad-text'; text('spread', `${number(ea.spreadPoints,1)} pts`); text('extension', `${number(ea.extensionAtr,2)} ATR`); text('lastEvent', ea.lastEvent || 'Waiting');
+  setMoney('balance', ea.balance); setMoney('equity', ea.equity); setMoney('dailyPnl', ea.dailyPnl); text('basketsToday', ea.basketsToday ?? '—'); text('lossStreak', `${ea.consecutiveLosses ?? '—'}${settings.testingMode ? ' • NO LOCK' : ''}`); text('algo', ea.algoAllowed ? 'ALLOWED' : 'BLOCKED'); $('algo').className = ea.algoAllowed ? 'good-text' : 'bad-text'; text('spread', `${number(ea.spreadPoints,1)} pts`); text('extension', `${number(ea.extensionAtr,2)} ATR`); text('lastEvent', ea.lastEvent || 'Waiting');
   const s = performance.summary || {};
   text('statBaskets', s.baskets || 0); text('statLegs', s.totalLegs || 0); text('statWinRate', `${number(s.winRate,1)}%`); setMoney('statNet', s.netProfit); text('statPf', s.profitFactor >= 999 ? '∞' : number(s.profitFactor,2)); setMoney('statAvg', s.averageBasket); text('statDuration', seconds(s.averageDurationSeconds)); setMoney('statBest', s.bestBasket); setMoney('statWorst', s.worstBasket); setMoney('statGiveback', s.averageGiveback); setMoney('statDrawdown', s.averageMaxDrawdown); setMoney('statPeak', s.peakFloatingProfit);
   statsRows('sideRows', performance.bySide, true); statsRows('bankStatRows', performance.byBankReason, false);
@@ -72,7 +74,7 @@ async function refresh() {
 $('connect').addEventListener('click', () => { token = $('token').value.trim(); localStorage.setItem('eveMomentumToken', token); clearInterval(timer); refresh(); timer=setInterval(refresh,1500); });
 $('applySettings').addEventListener('click', async () => {
   try {
-    const body = { fixedLot:Number($('fixedLot').value), initialPositions:Number($('initialPositions').value), maxPositions:Number($('maxPositions').value), maxTotalLots:Number($('maxTotalLots').value), useEquityScaling:$('useEquityScaling').checked, equityPer001Lot:Number($('equityPer001Lot').value) };
+    const body = { testingMode:$('testingMode').checked, fixedLot:Number($('fixedLot').value), initialPositions:Number($('initialPositions').value), maxPositions:Number($('maxPositions').value), maxTotalLots:Number($('maxTotalLots').value), useEquityScaling:$('useEquityScaling').checked, equityPer001Lot:Number($('equityPer001Lot').value) };
     const result = await request('/api/settings',{method:'POST',body:JSON.stringify(body)}); fillSettings(result.settings); text('message','Settings saved. EA will receive them on its next poll.'); $('message').className='message good-text'; await refresh();
   } catch (error) { text('message',error.message); $('message').className='message bad-text'; }
 });

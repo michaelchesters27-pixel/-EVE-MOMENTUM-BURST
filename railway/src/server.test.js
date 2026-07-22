@@ -20,6 +20,7 @@ test('settings are bounded and internally consistent', () => {
   assert.equal(s.fixedLot, .01);
   assert.equal(s.initialPositions, 4);
   assert.equal(s.maxTotalLots, .01);
+  assert.equal(s.testingMode, true);
 });
 
 test('csv escaping works', () => {

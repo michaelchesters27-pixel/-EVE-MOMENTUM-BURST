@@ -60,6 +60,7 @@ const events = loadJsonLines(files.events, MAX.events);
 
 export const DEFAULT_SETTINGS = Object.freeze({
   version: 1,
+  testingMode: true,
   fixedLot: 0.01,
   useEquityScaling: false,
   equityPer001Lot: 1000,
@@ -69,8 +70,10 @@ export const DEFAULT_SETTINGS = Object.freeze({
 });
 
 export function validateSettings(input = {}, current = DEFAULT_SETTINGS) {
+  const currentTestingMode = current.testingMode === undefined ? true : Boolean(current.testingMode);
   const next = {
     version: safeInteger(current.version, 1),
+    testingMode: input.testingMode === undefined ? currentTestingMode : Boolean(input.testingMode),
     fixedLot: clamp(safeNumber(input.fixedLot, current.fixedLot), 0.01, 100),
     useEquityScaling: input.useEquityScaling === undefined ? Boolean(current.useEquityScaling) : Boolean(input.useEquityScaling),
     equityPer001Lot: clamp(safeNumber(input.equityPer001Lot, current.equityPer001Lot), 10, 10_000_000),
@@ -85,7 +88,7 @@ export function validateSettings(input = {}, current = DEFAULT_SETTINGS) {
 let settings = validateSettings(loadJson(files.settings, DEFAULT_SETTINGS));
 
 const state = {
-  version: '2.0.2', service: 'EVE MOMENTUM BURST', mode: 'TRANSACTION-SAFE MOVING STRADDLE + ROLLING LADDER', startedAt: nowIso(),
+  version: '2.0.3', service: 'EVE MOMENTUM BURST', mode: 'DEMO TEST MODE + TRANSACTION-SAFE STRADDLE/LADDER', startedAt: nowIso(),
   control: { autonomous: String(process.env.AUTO_ENABLED || 'true').toLowerCase() !== 'false', emergency: false, manualNewsLock: false },
   command: { id: 0, action: 'NONE', createdAt: nowIso(), consumedAt: null, result: null },
   ea: {
@@ -243,7 +246,7 @@ export function createHttpServer() {
         return sendText(request, response, 200, [
           `command_id=${command.id || 0}`, `action=${command.action || 'NONE'}`, `autonomous=${state.control.autonomous ? 'true' : 'false'}`,
           `emergency=${state.control.emergency ? 'true' : 'false'}`, `manual_news_lock=${state.control.manualNewsLock ? 'true' : 'false'}`,
-          `settings_version=${settings.version}`, `fixed_lot=${settings.fixedLot}`, `use_equity_scaling=${settings.useEquityScaling ? 'true' : 'false'}`,
+          `settings_version=${settings.version}`, `testing_mode=${settings.testingMode ? 'true' : 'false'}`, `fixed_lot=${settings.fixedLot}`, `use_equity_scaling=${settings.useEquityScaling ? 'true' : 'false'}`,
           `equity_per_001_lot=${settings.equityPer001Lot}`, `initial_positions=${settings.initialPositions}`, `max_positions=${settings.maxPositions}`, `max_total_lots=${settings.maxTotalLots}`
         ].join('\n'));
       }
@@ -267,7 +270,7 @@ export function createHttpServer() {
         if (action === 'NEWS_LOCK_OFF') { state.control.manualNewsLock = false; addEvent('control', 'News lock disabled'); return sendJson(request, response, 200, { ok: true }); }
         if (action === 'EMERGENCY_STOP') { state.control.autonomous = false; state.control.emergency = true; return sendJson(request, response, 200, { ok: true, command: queueCommand(action) }); }
         if (action === 'RESET_EMERGENCY') { state.control.emergency = false; return sendJson(request, response, 200, { ok: true, command: queueCommand(action) }); }
-        const supported = new Set(['CLOSE_BASKET','CLOSE_POSITION','PAUSE_EA','RESUME_EA','PAUSE_ADDING','RESUME_ADDING','REBUILD_BRACKET']);
+        const supported = new Set(['CLOSE_BASKET','CLOSE_POSITION','PAUSE_EA','RESUME_EA','PAUSE_ADDING','RESUME_ADDING','REBUILD_BRACKET','RESET_TEST_COUNTERS']);
         if (!supported.has(action)) return sendJson(request, response, 400, { ok: false, error: 'Unsupported command' });
         return sendJson(request, response, 200, { ok: true, command: queueCommand(action) });
       }
