@@ -1,4 +1,4 @@
-EVE MOMENTUM BURST v2.00 — FULL REPLACEMENT
+EVE MOMENTUM BURST v2.01 — FULL REPLACEMENT
 
 This ZIP replaces only the EVE-MOMENTUM-BURST repository.
 It does not change EVE Gold Runner or EVESBOT.
@@ -11,8 +11,8 @@ It does not change EVE Gold Runner or EVESBOT.
    BOT_TOKEN=EVE-MOMENTUM-DEMO-2026
    AUTO_ENABLED=true
    DATA_DIR=/data
-6. Wait for Railway to show v2.0.0 online.
-7. Open mt5/EVE_Momentum_Burst_EA_v2.00.mq5 in MetaEditor and press F7.
+6. Wait for Railway to show v2.0.1 online.
+7. Open mt5/EVE_Momentum_Burst_EA_v2.01.mq5 in MetaEditor and press F7.
 8. Attach the compiled EA to XAUUSD M1.
 9. EA Inputs:
    InpRailwayBaseUrl=https://eve-momentum-burst-production.up.railway.app

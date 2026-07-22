@@ -9,11 +9,11 @@
    - `BOT_TOKEN=EVE-MOMENTUM-DEMO-2026`
    - `AUTO_ENABLED=true`
    - `DATA_DIR=/data`
-5. Wait for Railway deployment to show version `v2.0.0`.
+5. Wait for Railway deployment to show version `v2.0.1`.
 
 ## MetaEditor
 
-1. Open `mt5/EVE_Momentum_Burst_EA_v2.00.mq5`.
+1. Open `mt5/EVE_Momentum_Burst_EA_v2.01.mq5`.
 2. Press F7.
 3. Confirm MetaEditor reports zero errors before attachment.
 
@@ -21,7 +21,7 @@
 
 1. Open a separate XAUUSD M1 chart.
 2. Add `https://eve-momentum-burst-production.up.railway.app` under Tools > Options > Expert Advisors > Allow WebRequest.
-3. Attach `EVE_Momentum_Burst_EA_v2.00`.
+3. Attach `EVE_Momentum_Burst_EA_v2.01`.
 4. Set:
    - `InpRailwayBaseUrl=https://eve-momentum-burst-production.up.railway.app`
    - `InpBotToken=EVE-MOMENTUM-DEMO-2026`
