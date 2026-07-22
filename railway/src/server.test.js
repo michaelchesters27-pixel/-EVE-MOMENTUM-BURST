@@ -15,11 +15,12 @@ test('performance includes detailed basket metrics', () => {
   assert.equal(result.byBankReason.length, 2);
 });
 
-test('settings are bounded and internally consistent', () => {
+test('settings keep lot controls but disable strategy ceilings', () => {
   const s = validateSettings({ fixedLot: 0, initialPositions: 50, maxPositions: 4, maxTotalLots: .001 }, DEFAULT_SETTINGS);
   assert.equal(s.fixedLot, .01);
-  assert.equal(s.initialPositions, 4);
-  assert.equal(s.maxTotalLots, .01);
+  assert.equal(s.initialPositions, 1);
+  assert.equal(s.maxPositions, 0);
+  assert.equal(s.maxTotalLots, 0);
   assert.equal(s.testingMode, true);
 });
 

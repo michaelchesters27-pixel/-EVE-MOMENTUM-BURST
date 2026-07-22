@@ -1,5 +1,6 @@
-EVE Momentum Burst v2.0.4
-OCO CAMPAIGN + HEARTBEAT-HARDENED LADDER
+EVE Momentum Burst v2.0.5
+EVERY-CANDLE STRADDLE + SECOND-TRIGGER CONFIRMATION + NEWEST-SL BASKET BANKING
 
-MT5 file: mt5/EVE_Momentum_Burst_EA_v2.04.mq5
-Railway root directory: railway
+MT5 file: mt5/EVE_Momentum_Burst_EA_v2.05.mq5
+Railway root: railway
+Magic: 2207202603

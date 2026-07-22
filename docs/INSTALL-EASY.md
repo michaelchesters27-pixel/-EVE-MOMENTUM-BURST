@@ -1,32 +1,29 @@
-# Easy installation — v2.04
+# Easy installation — v2.05
 
 ## GitHub and Railway
 
-1. Wait until the old Momentum Burst EA has no open positions or pending orders.
-2. Remove v2.03 from its XAUUSD M1 chart.
-3. Replace the complete contents of the `EVE-MOMENTUM-BURST` GitHub repository with this package.
-4. Keep Railway Root Directory as `railway`.
-5. Keep:
-   - `BOT_TOKEN=EVE-MOMENTUM-DEMO-2026`
-   - `AUTO_ENABLED=true`
-   - `DATA_DIR=/data`
-6. Wait until the dashboard shows `v2.0.4`.
+1. Replace the entire existing GitHub repository with the contents of this ZIP.
+2. Do not upload the ZIP itself; upload its contents.
+3. Keep Railway's root directory set to `railway`.
+4. Keep the start command as `npm start`.
+5. Preserve the existing Railway variables, especially `BOT_TOKEN`.
+6. Wait until the dashboard shows `v2.0.5`.
 
-## MetaEditor
+## MetaTrader 5
 
-1. Open `mt5/EVE_Momentum_Burst_EA_v2.04.mq5`.
-2. Press F7.
-3. Confirm MetaEditor reports `0 errors`.
+1. Open MetaEditor.
+2. Open `mt5/EVE_Momentum_Burst_EA_v2.05.mq5`.
+3. Press **Compile**.
+4. Do not continue unless MetaEditor shows **0 errors**.
+5. In MT5, remove v2.04 from the chart.
+6. Delete any old pending orders left by v2.04 before attaching v2.05.
+7. Refresh Expert Advisors in Navigator.
+8. Attach `EVE_Momentum_Burst_EA_v2.05` to **XAUUSD M1**.
+9. Enter the exact Railway URL and BOT_TOKEN in the EA inputs.
+10. Enable Algo Trading.
 
-## MT5
+## Expected first state
 
-1. Open XAUUSD M1.
-2. Under Tools > Options > Expert Advisors, allow:
-   `https://eve-momentum-burst-production.up.railway.app`
-3. Attach `EVE_Momentum_Burst_EA_v2.04`.
-4. Set:
-   - `InpRailwayBaseUrl=https://eve-momentum-burst-production.up.railway.app`
-   - `InpBotToken=EVE-MOMENTUM-DEMO-2026`
-5. Tick Allow Algo Trading and keep MT5 Algo Trading enabled.
+While flat, the EA should report `EVERY-CANDLE STRADDLE` and then `CANDLE STRADDLE READY`, with one BUY STOP and one SELL STOP visible.
 
-The dashboard lot and ladder settings apply to new positions only.
+After the first trigger it should report `PROVISIONAL 1/2`. The opposite stop must remain until the second same-direction stop triggers.

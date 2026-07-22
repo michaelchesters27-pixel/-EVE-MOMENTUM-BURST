@@ -1,27 +1,22 @@
-# Validation record — v2.04
+# Validation record — v2.05
 
-Performed in the build environment:
+Checks completed in this package:
 
-- clean `npm ci`
-- Railway server JavaScript syntax check
-- dashboard JavaScript syntax check
-- four Node automated tests
-- local HTTP/API integration check with a v2.04 heartbeat and campaign fields
-- local health endpoint confirmed version 2.0.4
-- MQL5 structural checks:
-  - balanced braces and parentheses
-  - no duplicate function definitions
-  - StringFormat placeholder/argument counts checked
-  - no reserved identifier `protected`
-  - strict OCO-cancelling state present
-  - first-triggered-side conflict cleanup present
-  - ladder additions blocked until OCO confirmation
-  - newest-leg progress gate present
-  - fixed hard-invalidation reversal stop present
-  - one-request execution gate present
-  - non-heartbeat telemetry removed from OnTick/OnTradeTransaction and queued for timer delivery
-  - one blocking network request maximum per timer pass
-  - heartbeat is first network priority
-  - dashboard thresholds set to CONNECTED <45s, DELAYED 45–120s, OFFLINE >120s
+- balanced MQL5 braces, brackets and parentheses using a string/comment-aware scan;
+- unique MQL5 function definitions;
+- no calls from the active state machine to legacy market-order adding, reversal-stop or trailing functions;
+- pending orders are submitted with a broker-side SL and `TP = 0`;
+- confirmation/ladder SL construction requires the newest SL to sit beyond the previous trigger price;
+- ladder spacing automatically widens to preserve that previous-leg price lock while respecting broker stop distance;
+- the opposite provisional stop remains until two same-direction positions exist;
+- confirmed ladder placement waits while an unwanted opposite/legacy pending order still exists;
+- a broker-side SL close on the tracked newest position identifier requests full-basket closure;
+- full-basket closure closes positions before clearing pending orders;
+- v2.05 persistent state uses `EMB205`, avoiding v2.04 state inheritance;
+- manual pause/emergency state is not automatically cleared at midnight;
+- Railway JavaScript syntax checks pass;
+- Railway Node test suite passes;
+- local Railway `/api/state` check reports version 2.0.5;
+- `tools/validate_source.py` passes.
 
-MetaEditor compilation is still required. Static validation is not a substitute for the MQL5 compiler.
+MetaEditor is not available in this build environment. A zero-error MetaEditor compile remains mandatory before attaching the EA to MT5.

@@ -3,16 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EVE Momentum Burst v2.04</title>
+  <title>EVE Momentum Burst v2.05</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 <main class="wrap">
   <header class="hero">
     <div>
-      <p class="eyebrow">XAUUSD • M1 • MOVING STRADDLE • ROLLING MOMENTUM LADDER</p>
+      <p class="eyebrow">XAUUSD • M1 • EVERY-CANDLE STRADDLE • PROFIT-LOCK STOP LADDER</p>
       <h1>EVE MOMENTUM BURST</h1>
-      <p class="subtitle">Behavioural reconstruction engine with two-sided breakout orders, progressive momentum entries, individual protection, canary banking and complete evidence collection.</p>
+      <p class="subtitle">Every candle receives a BUY STOP and SELL STOP. The second same-side trigger confirms direction, the ladder keeps replenishing, each newest SL sits beyond the previous trigger, and that newest SL banks every older position.</p>
     </div>
     <span id="systemBadge" class="badge neutral">CONNECTING</span>
   </header>
@@ -52,24 +52,18 @@
       <button data-action="REBUILD_BRACKET">Rebuild bracket</button>
       <button data-action="PAUSE_EA">Pause new entries</button>
       <button data-action="RESUME_EA">Resume</button>
-      <button data-action="NEWS_LOCK_ON">News lock ON</button>
-      <button data-action="NEWS_LOCK_OFF">News lock OFF</button>
     </div>
   </section>
 
   <section class="panel">
-    <div class="section-head"><div><p class="eyebrow">LOT AND LADDER CONTROL</p><h2>Settings for new trades</h2></div><span id="settingsVersion" class="muted">Settings v—</span></div>
+    <div class="section-head"><div><p class="eyebrow">LOT CONTROL</p><h2>Size of every triggered position</h2></div><span id="settingsVersion" class="muted">Settings v—</span></div>
     <div class="settings-grid">
-      <label class="switch-row"><span>Demo testing mode — ignore automatic loss/profit/basket locks</span><input id="testingMode" type="checkbox"></label>
       <label><span>Fixed lot per position</span><input id="fixedLot" type="number" min="0.01" step="0.01"></label>
-      <label><span>Initial positions</span><input id="initialPositions" type="number" min="1" step="1"></label>
-      <label><span>Maximum open positions</span><input id="maxPositions" type="number" min="1" step="1"></label>
-      <label><span>Maximum total lots</span><input id="maxTotalLots" type="number" min="0.01" step="0.01"></label>
       <label class="switch-row"><span>Balance-scaled lot mode</span><input id="useEquityScaling" type="checkbox"></label>
       <label><span>Equity for each 0.01 lot</span><input id="equityPer001Lot" type="number" min="10" step="10"></label>
     </div>
-    <div class="buttons"><button id="applySettings" class="positive">Apply settings</button><button data-action="RESET_TEST_COUNTERS">Reset testing counters</button></div>
-    <p id="testingModeNotice" class="notice">Demo testing mode is ON: consecutive losses, daily P/L and basket count are tracked but cannot stop new entries. Manual pause, news lock and emergency stop still work.</p>
+    <div class="buttons"><button id="applySettings" class="positive">Apply lot settings</button></div>
+    <p id="operatingModeNotice" class="notice">24/5 price engine: no session gate, momentum gate, position-count gate, total-lot gate, campaign timer or post-campaign cooldown. Twelve ladder stops are staged ahead and replenished continuously.</p>
   </section>
 
   <section class="two-col">
@@ -81,15 +75,15 @@
         <div><span>Positions / pending</span><strong id="positionCounts">0 / 0</strong></div>
         <div><span>Total lots</span><strong id="totalLots">0.00</strong></div>
         <div><span>Average entry</span><strong id="averageEntry">—</strong></div>
-        <div><span>Protected stop</span><strong id="protectedStop">—</strong></div>
+        <div><span>Newest leg SL</span><strong id="protectedStop">—</strong></div>
         <div><span>Peak basket profit</span><strong id="peakProfit">$0.00</strong></div>
         <div><span>Worst floating P/L</span><strong id="basketMae">$0.00</strong></div>
         <div><span>Newest ticket</span><strong id="newestTicket">—</strong></div>
         <div><span>Newest current / peak</span><strong id="newestProfit">—</strong></div>
         <div><span>Newest age</span><strong id="newestAge">—</strong></div>
-        <div><span>Bank candidate</span><strong id="bankCandidate">NO</strong></div>
+        <div><span>Newest-SL basket exit</span><strong id="bankCandidate">NO</strong></div>
       </div>
-      <div id="bankReason" class="notice">No banking signal.</div>
+      <div id="bankReason" class="notice">Waiting for a triggered position.</div>
       <div id="closeInfo" class="notice">No close pending.</div>
       <div class="buttons"><button data-action="CLOSE_BASKET">Close full basket</button><button data-action="EMERGENCY_STOP" class="danger">Emergency stop</button><button data-action="RESET_EMERGENCY">Reset emergency</button></div>
     </article>

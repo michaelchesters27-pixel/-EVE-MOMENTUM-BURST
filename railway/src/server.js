@@ -65,8 +65,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   useEquityScaling: false,
   equityPer001Lot: 1000,
   initialPositions: 1,
-  maxPositions: 20,
-  maxTotalLots: 0.20
+  maxPositions: 0,
+  maxTotalLots: 0
 });
 
 export function validateSettings(input = {}, current = DEFAULT_SETTINGS) {
@@ -77,18 +77,16 @@ export function validateSettings(input = {}, current = DEFAULT_SETTINGS) {
     fixedLot: clamp(safeNumber(input.fixedLot, current.fixedLot), 0.01, 100),
     useEquityScaling: input.useEquityScaling === undefined ? Boolean(current.useEquityScaling) : Boolean(input.useEquityScaling),
     equityPer001Lot: clamp(safeNumber(input.equityPer001Lot, current.equityPer001Lot), 10, 10_000_000),
-    initialPositions: clamp(safeInteger(input.initialPositions, current.initialPositions), 1, 20),
-    maxPositions: clamp(safeInteger(input.maxPositions, current.maxPositions), 1, 100),
-    maxTotalLots: clamp(safeNumber(input.maxTotalLots, current.maxTotalLots), 0.01, 100)
+    initialPositions: 1,
+    maxPositions: 0,
+    maxTotalLots: 0
   };
-  if (next.initialPositions > next.maxPositions) next.initialPositions = next.maxPositions;
-  if (next.maxTotalLots < next.fixedLot) next.maxTotalLots = next.fixedLot;
   return next;
 }
 let settings = validateSettings(loadJson(files.settings, DEFAULT_SETTINGS));
 
 const state = {
-  version: '2.0.4', service: 'EVE MOMENTUM BURST', mode: 'OCO CAMPAIGN + HEARTBEAT-HARDENED LADDER', startedAt: nowIso(),
+  version: '2.0.5', service: 'EVE MOMENTUM BURST', mode: 'CANDLE STRADDLE + 2-TRIGGER + PROFIT-LOCK LADDER + NEWEST-SL BANKING', startedAt: nowIso(),
   control: { autonomous: String(process.env.AUTO_ENABLED || 'true').toLowerCase() !== 'false', emergency: false, manualNewsLock: false },
   command: { id: 0, action: 'NONE', createdAt: nowIso(), consumedAt: null, result: null },
   ea: {
@@ -266,8 +264,6 @@ export function createHttpServer() {
         const action = String(body.action || '').toUpperCase();
         if (action === 'ENABLE_AUTO') { state.control.autonomous = true; state.control.emergency = false; addEvent('control', 'Autonomous enabled'); return sendJson(request, response, 200, { ok: true }); }
         if (action === 'DISABLE_AUTO') { state.control.autonomous = false; addEvent('control', 'Autonomous disabled'); return sendJson(request, response, 200, { ok: true }); }
-        if (action === 'NEWS_LOCK_ON') { state.control.manualNewsLock = true; addEvent('control', 'News lock enabled'); return sendJson(request, response, 200, { ok: true }); }
-        if (action === 'NEWS_LOCK_OFF') { state.control.manualNewsLock = false; addEvent('control', 'News lock disabled'); return sendJson(request, response, 200, { ok: true }); }
         if (action === 'EMERGENCY_STOP') { state.control.autonomous = false; state.control.emergency = true; return sendJson(request, response, 200, { ok: true, command: queueCommand(action) }); }
         if (action === 'RESET_EMERGENCY') { state.control.emergency = false; return sendJson(request, response, 200, { ok: true, command: queueCommand(action) }); }
         const supported = new Set(['CLOSE_BASKET','CLOSE_POSITION','PAUSE_EA','RESUME_EA','PAUSE_ADDING','RESUME_ADDING','REBUILD_BRACKET','RESET_TEST_COUNTERS']);
