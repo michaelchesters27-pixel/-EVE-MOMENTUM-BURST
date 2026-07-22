@@ -85,7 +85,7 @@ export function validateSettings(input = {}, current = DEFAULT_SETTINGS) {
 let settings = validateSettings(loadJson(files.settings, DEFAULT_SETTINGS));
 
 const state = {
-  version: '2.0.1', service: 'EVE MOMENTUM BURST', mode: 'MOVING STRADDLE + ROLLING LADDER', startedAt: nowIso(),
+  version: '2.0.2', service: 'EVE MOMENTUM BURST', mode: 'TRANSACTION-SAFE MOVING STRADDLE + ROLLING LADDER', startedAt: nowIso(),
   control: { autonomous: String(process.env.AUTO_ENABLED || 'true').toLowerCase() !== 'false', emergency: false, manualNewsLock: false },
   command: { id: 0, action: 'NONE', createdAt: nowIso(), consumedAt: null, result: null },
   ea: {

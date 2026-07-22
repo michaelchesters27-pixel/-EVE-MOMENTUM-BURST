@@ -1,43 +1,36 @@
-# Strategy specification
+# Strategy specification — v2.02
 
-## Flat state: moving straddle
+## Moving straddle
 
-The EA maintains two broker pending orders around live price:
+When flat and armed, the EA maintains one BUY STOP above Ask and one SELL STOP below Bid. The levels are calculated from live ATR, the broker stop/freeze distances, tick size and a safety buffer.
 
-- BUY STOP above ask
-- SELL STOP below bid
+The engine modifies existing orders instead of repeatedly deleting and recreating them. Only one broker trade request may be active during each synchronisation step.
 
-The bracket is refreshed when price moves enough or the orders reach their configured age. Spread, session, account controls and live activity must permit the bracket.
+## Breakout and rolling ladder
 
-## Breakout and ladder
+The first pending order that triggers becomes the active direction. Additional same-direction market legs may be added only when the configured limits, basket-profit requirement, momentum score, acceleration, spacing and cooldown agree.
 
-The first triggered order becomes the active direction. The EA can fill the configured initial position count, then add further same-direction positions only when:
+## Stop-and-reverse
 
-- the position and total-lot limits allow it;
-- the basket is not losing when `InpNeverAddToLosingBasket` is enabled;
-- live score and acceleration support the active direction;
-- price has advanced by the configured ATR spacing;
-- the add cooldown has elapsed.
-
-## Reversal order
-
-While a ladder is active, the opposite pending stop is aligned below a BUY ladder or above a SELL ladder. It follows the protected stop/invalidation area. If triggered, the EA removes the old direction and retains the new direction.
+While a ladder is active, only the opposite pending stop is retained. It is aligned to the protected stop or invalidation area. If both directions temporarily coexist on the hedging account, v2.02 closes one old-direction leg per confirmed broker cycle and retains the newest direction.
 
 ## Individual protection
 
-Each leg has a fixed SL and TP. Break-even and trailing are updated per ticket. Newer entries use tighter trailing; older entries receive more room.
+Each leg receives fixed SL and TP. Break-even and trailing are managed per ticket. Only one position modification is sent per execution cycle, preventing request collisions.
 
-## Canary banking
+## Banking
 
-The newest position is tracked separately:
+The newest leg is tracked as the canary. The ladder can bank when:
 
-- current profit
-- highest profit reached
-- age
-- ticket
+- the canary gives back its configured share of peak profit while momentum weakens;
+- the canary turns sufficiently negative after maturing;
+- the total basket gives back the configured share of peak floating profit;
+- dominant opposite acceleration appears;
+- basket loss or duration limits are reached;
+- the user closes or invokes emergency stop.
 
-The EA can bank the ladder when the canary gives back the configured share of its peak while momentum is tiring, or when it turns sufficiently negative after the ladder has developed. Basket peak-profit giveback and dominant opposite momentum provide additional banking routes.
+Pending orders are cleared first. Positions are then closed one ticket at a time. The basket is recorded only after both counts are zero.
 
-## Complete tracking
+## Evidence
 
-Baskets, legs, pending orders, banking decisions, scans and events are all recorded separately so each parameter can be analysed instead of guessed.
+Scans, pending-order actions, individual legs, banking decisions, baskets and setting changes are recorded separately for analysis.

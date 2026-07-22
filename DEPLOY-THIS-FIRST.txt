@@ -1,30 +1,26 @@
-EVE MOMENTUM BURST v2.01 — FULL REPLACEMENT
+EVE MOMENTUM BURST v2.02 — FULL REPLACEMENT
 
 This ZIP replaces only the EVE-MOMENTUM-BURST repository.
 It does not change EVE Gold Runner or EVESBOT.
 
-1. Confirm the old Momentum Burst EA has no open positions or pending orders.
-2. Disable autonomous mode and remove v1.10 from the XAUUSD M1 chart.
-3. Delete the old repository contents and upload everything inside this folder.
-4. Railway Root Directory remains: railway
-5. Keep these Railway variables:
+1. Confirm Momentum Burst has no open positions or pending orders.
+2. Disable autonomous mode and remove v2.01 from the XAUUSD M1 chart.
+3. Delete the old GitHub repository contents.
+4. Upload everything inside this package.
+5. Railway Root Directory remains: railway
+6. Keep these Railway variables:
    BOT_TOKEN=EVE-MOMENTUM-DEMO-2026
    AUTO_ENABLED=true
    DATA_DIR=/data
-6. Wait for Railway to show v2.0.1 online.
-7. Open mt5/EVE_Momentum_Burst_EA_v2.01.mq5 in MetaEditor and press F7.
-8. Attach the compiled EA to XAUUSD M1.
-9. EA Inputs:
-   InpRailwayBaseUrl=https://eve-momentum-burst-production.up.railway.app
-   InpBotToken=EVE-MOMENTUM-DEMO-2026
-10. MT5 Tools > Options > Expert Advisors must contain the same https URL.
-11. Open the Railway dashboard and apply the lot/ladder settings you want.
+7. Wait for Railway to show v2.0.2 online.
+8. Open mt5/EVE_Momentum_Burst_EA_v2.02.mq5 in MetaEditor.
+9. Press F7 and confirm 0 errors.
+10. Attach v2.02 to XAUUSD M1.
+11. EA Inputs:
+    InpRailwayBaseUrl=https://eve-momentum-burst-production.up.railway.app
+    InpBotToken=EVE-MOMENTUM-DEMO-2026
+12. MT5 Tools > Options > Expert Advisors must contain the same https URL.
+13. Open the Railway dashboard and apply your chosen lot and ladder settings.
 
-Default dashboard settings:
-- Fixed lot: 0.01
-- Initial positions: 1
-- Maximum positions: 20
-- Maximum total lots: 0.20
-- Balance scaling: OFF
-
-The dashboard settings affect new positions only. Existing positions are never resized.
+v2.02 fixes invalid-price rejections, overlapping cancel/replace requests,
+duplicate order races, unsafe stop-and-reverse sequencing and premature flat reporting.
