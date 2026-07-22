@@ -1,15 +1,15 @@
-# Demo testing procedure — v2.05
+# Demo testing procedure — v2.06
 
 Use the IC Markets demo hedging account first.
 
 ## Before attaching
 
-1. Compile `mt5/EVE_Momentum_Burst_EA_v2.05.mq5` in MetaEditor.
+1. Compile `mt5/EVE_Momentum_Burst_EA_v2.06.mq5` in MetaEditor.
 2. Confirm **0 errors**.
 3. Remove v2.04 and delete its old pending orders.
-4. Attach v2.05 to XAUUSD M1.
+4. Attach v2.06 to XAUUSD M1.
 5. Enable Algo Trading.
-6. Confirm the Experts tab reports v2.05.
+6. Confirm the Experts tab reports v2.06.
 
 ## Scenario A — every-candle straddle
 

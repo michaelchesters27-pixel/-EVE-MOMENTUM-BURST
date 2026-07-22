@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static package validation for EVE Momentum Burst v2.05.
+"""Static package validation for EVE Momentum Burst v2.06.
 
 This is not a substitute for MetaEditor compilation. It catches structural damage and
 verifies the locked campaign invariants requested for this build.
@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "mt5" / "EVE_Momentum_Burst_EA_v2.05.mq5"
+SOURCE = ROOT / "mt5" / "EVE_Momentum_Burst_EA_v2.06.mq5"
 
 
 def fail(message: str) -> None:
@@ -146,8 +146,12 @@ def main() -> int:
         fail(f"duplicate function definitions: {duplicates}")
 
     required_fragments = {
-        "v2.05 property": '#property version   "2.05"',
-        "new persistent prefix": 'StringFormat("EMB205_%I64d_%I64u_"',
+        "v2.06 property": '#property version   "2.06"',
+        "new persistent prefix": 'StringFormat("EMB206_%I64d_%I64u_"',
+        "isolated magic number": "InpMagicNumber                    = 2207202606",
+        "legacy cleanup magic": "InpLegacyMagicNumber               = 2207202603",
+        "legacy pending cleanup": "HandleLegacyPendingCleanup()",
+        "analytics-only score": "InpAnalyticsReferenceScore",
         "no strategy request cooldown": "InpTradeRequestCooldownMs           = 0",
         "no position ceiling": "InpMaximumPositions                = 0",
         "no total-lot ceiling": "InpMaximumTotalLots                = 0.0",
@@ -181,9 +185,35 @@ def main() -> int:
         if forbidden in manage:
             fail(f"active ManageBasket contains forbidden gate/call: {forbidden}")
 
+    operational_functions = [
+        "ManageBasket",
+        "MaintainMovingStraddle",
+        "MaintainProvisionalCampaign",
+        "MaintainActiveLadder",
+        "BuildSafePendingLevels",
+    ]
+    for function_name in operational_functions:
+        body = function_body(text, function_name)
+        for forbidden in (
+            "InpAnalyticsReferenceScore",
+            "buy_score",
+            "sell_score",
+            "score_gap",
+            ".decision",
+            ".momentum_state",
+            ".block_reason",
+        ):
+            if forbidden in body:
+                fail(f"{function_name} contains analytics/score dependency: {forbidden}")
+
     moving = function_body(text, "MaintainMovingStraddle")
     if "manual_news_lock" in moving or "InsideTradingSessionUTC(" in moving:
         fail("flat candle straddle is still gated by news/session logic")
+
+    legacy = function_body(text, "HandleLegacyPendingCleanup")
+    for fragment in ("InpLegacyMagicNumber", "trade.OrderDelete", "EVE-MB2-", "EVE25-"):
+        if fragment not in text:
+            fail(f"legacy isolation missing: {fragment}")
 
     close = function_body(text, "ContinuePendingClose")
     positions_index = close.find("CountOurPositions() > 0")
@@ -208,7 +238,7 @@ def main() -> int:
 
     print(f"PASS: {SOURCE.name}")
     print(f"Functions: {len(names)} unique")
-    print("Locked invariants: candle straddle, 2-trigger confirmation, continuous stop ladder, previous-leg SL profit lock, newest-SL basket bank, no automatic strategy gates")
+    print("Locked invariants: score-independent candle straddle, 2-trigger confirmation, continuous stop ladder, previous-leg SL profit lock, newest-SL basket bank, legacy order isolation, no automatic strategy gates")
     print("NOTE: MetaEditor compilation is still required.")
     return 0
 

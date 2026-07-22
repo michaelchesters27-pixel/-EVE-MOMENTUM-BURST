@@ -1,8 +1,8 @@
-# EVE MOMENTUM BURST v2.05
+# EVE MOMENTUM BURST v2.06
 
 This is the complete GitHub-ready replacement for v2.04.
 
-v2.05 runs the exact candle-triggered ladder requested:
+v2.06 runs the exact candle-triggered ladder requested:
 
 1. While flat, every new M1 candle receives one BUY STOP and one SELL STOP.
 2. The first triggered order starts a provisional direction.
@@ -34,7 +34,7 @@ Use an MT5 hedging account. During a provisional false-breakout transition, BUY 
 
 ## Repository structure
 
-- `mt5/EVE_Momentum_Burst_EA_v2.05.mq5` — complete EA source
+- `mt5/EVE_Momentum_Burst_EA_v2.06.mq5` — complete EA source
 - `railway/` — dashboard, controls, persistence, CSV exports and analysis
 - `supabase/schema.sql` — optional permanent evidence database
 - `tools/validate_source.py` — local structural/source validation
@@ -45,10 +45,18 @@ Use an MT5 hedging account. During a provisional false-breakout transition, BUY 
 
 ## Identity
 
-- Magic number: `2207202603`
-- Trade comment: `EVE-MOMENTUM-V2.05`
+- Magic number: `2207202606`
+- Trade comment: `EVE-MOMENTUM-V2.06`
 - Railway root directory: `railway`
 - Intended chart: `XAUUSD M1`
 - Railway domain: `https://eve-momentum-burst-production.up.railway.app`
 
 MetaEditor is the definitive MQL5 compilation check. Compile with zero errors and test on the IC Markets demo account before any live deployment.
+
+
+## v2.06 score isolation and legacy cleanup
+
+- BUY/SELL scores, velocity, EMA alignment and momentum labels are telemetry only. They are not referenced by the straddle, provisional confirmation, ladder replenishment or newest-SL basket close functions.
+- v2.06 uses a new magic number (`2207202606`) and `EVE26-*` order comments, so v2.04/v2.05 positions and pending orders cannot be adopted as part of a v2.06 campaign.
+- Before starting its own bracket, v2.06 repeatedly removes recognised v2.04/v2.05 EVE pending orders using the previous magic number.
+- If an old EVE position is still open, v2.06 displays a migration warning and does not overlap it. Close that old position manually, then v2.06 begins immediately.

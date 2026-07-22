@@ -1,4 +1,4 @@
-# Strategy specification — v2.05
+# Strategy specification — v2.06
 
 ## 1. Fresh straddle on every candle
 
@@ -44,7 +44,7 @@ This can repeat without a cooldown.
 
 ## 5. Continuous confirmed ladder
 
-After confirmation, v2.05 stages `InpLadderOrdersAhead` same-direction pending stops. The default is 12 orders ahead.
+After confirmation, v2.06 stages `InpLadderOrdersAhead` same-direction pending stops. The default is 12 orders ahead.
 
 As price triggers one order:
 
@@ -86,7 +86,7 @@ An older position closing independently does not trigger the basket close. The c
 
 ## 8. No automatic strategy restrictions
 
-v2.05 does not stop or delay entries because of:
+v2.06 does not stop or delay entries because of:
 
 - time of day;
 - momentum score;
@@ -110,4 +110,4 @@ After an EA or terminal restart:
 - a basket with at least two positions in the retained direction is recovered as confirmed;
 - the newest live position identifier and SL are rediscovered;
 - stale flat pending orders are cleared and replaced with a current-candle straddle;
-- v2.05 uses a new persistent-state prefix so it does not inherit v2.04 campaign globals.
+- v2.06 uses a new persistent-state prefix so it does not inherit v2.04 campaign globals.

@@ -1,4 +1,4 @@
-EVE MOMENTUM BURST v2.05 — FULL REPLACEMENT
+EVE MOMENTUM BURST v2.06 — FULL REPLACEMENT
 
 THIS IS NOT A PATCH.
 Replace the complete GitHub repository with everything inside this folder.
@@ -10,11 +10,11 @@ DEPLOYMENT
 4. Railway root directory remains: railway
 5. Railway start command remains: npm start
 6. Keep the current Railway environment variables.
-7. Wait for Railway to show v2.0.5 online.
-8. Open mt5/EVE_Momentum_Burst_EA_v2.05.mq5 in MetaEditor.
+7. Wait for Railway to show v2.0.6 online.
+8. Open mt5/EVE_Momentum_Burst_EA_v2.06.mq5 in MetaEditor.
 9. Compile and require 0 errors.
-10. Remove v2.04 and delete its old pending orders from MT5.
-11. Attach v2.05 to XAUUSD M1 on the demo hedging account.
+10. Remove v2.04/v2.05 from the chart. v2.06 will remove recognised old EVE pending orders automatically.
+11. Attach v2.06 to XAUUSD M1 on the demo hedging account.
 
 EXPECTED LOGIC
 - fresh BUY STOP + SELL STOP every candle while flat;
@@ -30,3 +30,9 @@ EXPECTED LOGIC
 
 IMPORTANT
 The source and Node components have passed local structural/tests, but MetaEditor compilation cannot be performed in this environment. Do not deploy to live money until MetaEditor shows 0 errors and the demo scenarios in docs/TESTING.md have passed.
+
+
+IMPORTANT MIGRATION CHECK
+- v2.06 has a new magic number and will delete recognised old v2.04/v2.05 pending EVE orders.
+- It will not overlap an old open EVE position. Close any old EVE position manually before expecting the new bracket.
+- The dashboard BUY/SELL scores are labelled ANALYTICS ONLY and cannot stop the price-trigger engine.

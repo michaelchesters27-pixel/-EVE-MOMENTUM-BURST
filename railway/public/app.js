@@ -25,6 +25,21 @@ function rows(id, items, render, emptyCols) {
 function statsRows(id, items, includePf = false) {
   rows(id, items || [], r => `<tr><td>${esc(r.key)}</td><td>${r.baskets}</td><td>${number(r.winRate,1)}%</td><td class="${cls(r.netProfit)}">${money(r.netProfit)}</td>${includePf ? `<td>${r.profitFactor >= 999 ? '∞' : number(r.profitFactor,2)}</td>` : ''}</tr>`, includePf ? 5 : 4);
 }
+
+function operationalReason(ea, control) {
+  if (ea.connectionStatus !== 'CONNECTED') return 'MARKET CLOSED OR NO FRESH MT5 HEARTBEAT — old scan values are ignored.';
+  if (!control.autonomous || !ea.autonomous) return 'AUTONOMOUS OFF — no new price-trigger orders will be placed.';
+  if (ea.emergency) return 'EMERGENCY STOP ACTIVE.';
+  if (String(ea.engineState || '').includes('LEGACY') || String(ea.lastEvent || '').includes('previous EVE')) return ea.lastEvent || 'Removing old EVE orders before v2.06 starts.';
+  if (ea.closePending) return ea.closeReason || 'Newest-leg SL triggered — banking the full basket.';
+  if (Number(ea.positionCount || 0) > 0) {
+    if (String(ea.campaignPhase || '').includes('OCO') || String(ea.engineState || '').includes('PROVISIONAL')) return 'FIRST TRIGGER PROVISIONAL — the opposite stop remains until the second same-side trigger.';
+    return `ACTIVE ${ea.campaignCurrentSide || ea.side || ''} LADDER — newest triggered leg SL controls the full-basket exit.`;
+  }
+  if (Number(ea.bracketBuyPrice || 0) > 0 && Number(ea.bracketSellPrice || 0) > 0) return 'PRICE ENGINE ARMED — BUY STOP and SELL STOP are live. Scores do not control either order.';
+  return 'WAITING FOR THE BROKER MARKET TO OPEN AND A FRESH TICK — scores do not control the bracket.';
+}
+
 function fillSettings(s, force = false) {
   if (!force && loadedSettingsVersion === Number(s.version)) return;
   loadedSettingsVersion = Number(s.version);
@@ -40,11 +55,11 @@ function render(payload) {
   const connectionLabel = ea.connectionStatus === 'DELAYED' && ea.terminalConnected ? 'TELEMETRY DELAYED' : (ea.connectionStatus || 'OFFLINE'); text('eaStatus', connectionLabel); $('eaStatus').className = ea.connectionStatus === 'CONNECTED' ? 'good-text' : ea.connectionStatus === 'DELAYED' ? 'warn-text' : 'bad-text';
   text('eaDetail', ea.account ? `${ea.account} • ${ea.symbol} • EA ${ea.version || '—'}` : 'No heartbeat');
   text('engineState', ea.campaignPhase || ea.engineState || '—'); text('engineDetail', `${ea.lastEvent || 'Waiting'}${ea.campaignStartSide && ea.campaignStartSide !== 'NONE' ? ` • ${ea.campaignStartSide}→${ea.campaignCurrentSide || ea.side || 'NONE'} • ${ea.campaignBuyLegs || 0} BUY/${ea.campaignSellLegs || 0} SELL` : ''}`);
-  text('momentumState', ea.momentumState || '—'); text('momentumDetail', `${ea.liveDirection || 'NONE'} • ${ea.buyScore || 0}/11 BUY • ${ea.sellScore || 0}/11 SELL`);
+  text('momentumState', ea.momentumState || '—'); text('momentumDetail', `DISPLAY ONLY • ${ea.buyScore || 0}/11 BUY • ${ea.sellScore || 0}/11 SELL`);
   text('autoTitle', `AUTONOMOUS ${control.autonomous ? 'ON' : 'OFF'}`); $('autoTitle').className = control.autonomous ? 'good-text' : 'bad-text';
-  text('scanTime', scan.receivedAt ? `Snapshot: ${when(scan.receivedAt)}` : 'No live snapshot');
-  text('blockReason', scan.blockReason || ea.lastEvent || 'Waiting for EA data');
-  text('watchDirection', ea.liveDirection || scan.watchDirection || 'NONE'); text('buyScore', `${ea.buyScore || scan.buyScore || 0}/11`); text('sellScore', `${ea.sellScore || scan.sellScore || 0}/11`);
+  text('scanTime', ea.lastSeenAt ? `Heartbeat: ${when(ea.lastSeenAt)}` : 'No current heartbeat');
+  text('blockReason', operationalReason(ea, control));
+  text('watchDirection', Number(ea.positionCount || 0) > 0 ? (ea.campaignCurrentSide || ea.side || 'NONE') : 'NONE'); text('buyScore', `${ea.buyScore || scan.buyScore || 0}/11`); text('sellScore', `${ea.sellScore || scan.sellScore || 0}/11`);
   text('bracketState', ea.bracketState || 'NONE'); text('buyStop', Number(ea.bracketBuyPrice) > 0 ? number(ea.bracketBuyPrice, 2) : '—'); text('sellStop', Number(ea.bracketSellPrice) > 0 ? number(ea.bracketSellPrice, 2) : '—');
   text('velocities', `${number(ea.velocity1s,3)} / ${number(ea.velocity3s,3)}`); text('tickRate', `x${number(ea.tickRateRatio,2)}`);
   text('basketTitle', ea.positionCount ? `${ea.side} LADDER` : 'NONE'); text('basketState', ea.closePending ? 'CLOSE PENDING' : ea.positionCount ? 'ACTIVE' : 'IDLE');

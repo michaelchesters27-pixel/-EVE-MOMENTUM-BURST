@@ -1,4 +1,4 @@
-# Easy installation — v2.05
+# Easy installation — v2.06
 
 ## GitHub and Railway
 
@@ -7,18 +7,18 @@
 3. Keep Railway's root directory set to `railway`.
 4. Keep the start command as `npm start`.
 5. Preserve the existing Railway variables, especially `BOT_TOKEN`.
-6. Wait until the dashboard shows `v2.0.5`.
+6. Wait until the dashboard shows `v2.0.6`.
 
 ## MetaTrader 5
 
 1. Open MetaEditor.
-2. Open `mt5/EVE_Momentum_Burst_EA_v2.05.mq5`.
+2. Open `mt5/EVE_Momentum_Burst_EA_v2.06.mq5`.
 3. Press **Compile**.
 4. Do not continue unless MetaEditor shows **0 errors**.
 5. In MT5, remove v2.04 from the chart.
-6. Delete any old pending orders left by v2.04 before attaching v2.05.
+6. Delete any old pending orders left by v2.04 before attaching v2.06.
 7. Refresh Expert Advisors in Navigator.
-8. Attach `EVE_Momentum_Burst_EA_v2.05` to **XAUUSD M1**.
+8. Attach `EVE_Momentum_Burst_EA_v2.06` to **XAUUSD M1**.
 9. Enter the exact Railway URL and BOT_TOKEN in the EA inputs.
 10. Enable Algo Trading.
 

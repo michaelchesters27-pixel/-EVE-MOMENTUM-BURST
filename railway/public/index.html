@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EVE Momentum Burst v2.05</title>
+  <title>EVE Momentum Burst v2.06</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -27,19 +27,19 @@
     <article class="card"><p class="label">RAILWAY</p><strong id="railway">—</strong><span id="version">v—</span></article>
     <article class="card"><p class="label">MT5 EA</p><strong id="eaStatus">—</strong><span id="eaDetail">Waiting</span></article>
     <article class="card"><p class="label">ENGINE STATE</p><strong id="engineState">—</strong><span id="engineDetail">No heartbeat</span></article>
-    <article class="card"><p class="label">MOMENTUM</p><strong id="momentumState">—</strong><span id="momentumDetail">No live scan</span></article>
+    <article class="card"><p class="label">ANALYTICS ONLY</p><strong id="momentumState">—</strong><span id="momentumDetail">Does not control orders</span></article>
   </section>
 
   <section class="panel">
     <div class="section-head">
       <div><p class="eyebrow">LIVE CONTROL</p><h2 id="autoTitle">AUTONOMOUS —</h2></div>
-      <span id="scanTime" class="muted">No live snapshot</span>
+      <span id="scanTime" class="muted">No current heartbeat</span>
     </div>
     <div id="blockReason" class="notice">Waiting for EA data.</div>
     <div class="score-grid eight">
-      <article><span>Live direction</span><strong id="watchDirection">—</strong></article>
-      <article><span>BUY score</span><strong id="buyScore">0/11</strong></article>
-      <article><span>SELL score</span><strong id="sellScore">0/11</strong></article>
+      <article><span>Campaign direction</span><strong id="watchDirection">—</strong></article>
+      <article><span>BUY analytics only</span><strong id="buyScore">0/11</strong></article>
+      <article><span>SELL analytics only</span><strong id="sellScore">0/11</strong></article>
       <article><span>Bracket state</span><strong id="bracketState">—</strong></article>
       <article><span>BUY STOP</span><strong id="buyStop">—</strong></article>
       <article><span>SELL STOP</span><strong id="sellStop">—</strong></article>
@@ -63,7 +63,7 @@
       <label><span>Equity for each 0.01 lot</span><input id="equityPer001Lot" type="number" min="10" step="10"></label>
     </div>
     <div class="buttons"><button id="applySettings" class="positive">Apply lot settings</button></div>
-    <p id="operatingModeNotice" class="notice">24/5 price engine: no session gate, momentum gate, position-count gate, total-lot gate, campaign timer or post-campaign cooldown. Twelve ladder stops are staged ahead and replenished continuously.</p>
+    <p id="operatingModeNotice" class="notice">24/5 price-trigger engine: scores are display-only and cannot block entries, additions or basket exits. No session gate, position-count gate, total-lot gate, campaign timer or post-campaign cooldown. Twelve ladder stops are staged ahead and replenished continuously.</p>
   </section>
 
   <section class="two-col">

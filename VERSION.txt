@@ -1,6 +1,6 @@
-EVE Momentum Burst v2.0.5
+EVE Momentum Burst v2.0.6
 EVERY-CANDLE STRADDLE + SECOND-TRIGGER CONFIRMATION + NEWEST-SL BASKET BANKING
 
-MT5 file: mt5/EVE_Momentum_Burst_EA_v2.05.mq5
+MT5 file: mt5/EVE_Momentum_Burst_EA_v2.06.mq5
 Railway root: railway
-Magic: 2207202603
+Magic: 2207202606
