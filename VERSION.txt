@@ -1,4 +1,5 @@
-EVE Momentum Burst v2.03
-Engine: Moving Straddle + Rolling Momentum Ladder — Demo Test Mode + Transaction-Safe Execution
-MT5: EVE_Momentum_Burst_EA_v2.03.mq5
-Railway: v2.0.3
+EVE Momentum Burst v2.0.4
+OCO CAMPAIGN + HEARTBEAT-HARDENED LADDER
+
+MT5 file: mt5/EVE_Momentum_Burst_EA_v2.04.mq5
+Railway root directory: railway

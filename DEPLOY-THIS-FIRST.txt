@@ -1,10 +1,10 @@
-EVE MOMENTUM BURST v2.03 — FULL REPLACEMENT
+EVE MOMENTUM BURST v2.04 — FULL REPLACEMENT
 
 This ZIP replaces only the EVE-MOMENTUM-BURST repository.
 It does not change EVE Gold Runner or EVESBOT.
 
 1. Confirm Momentum Burst has no open positions or pending orders.
-2. Disable autonomous mode and remove v2.01 from the XAUUSD M1 chart.
+2. Disable autonomous mode and remove v2.03 from the XAUUSD M1 chart.
 3. Delete the old GitHub repository contents.
 4. Upload everything inside this package.
 5. Railway Root Directory remains: railway
@@ -12,15 +12,15 @@ It does not change EVE Gold Runner or EVESBOT.
    BOT_TOKEN=EVE-MOMENTUM-DEMO-2026
    AUTO_ENABLED=true
    DATA_DIR=/data
-7. Wait for Railway to show v2.0.3 online.
-8. Open mt5/EVE_Momentum_Burst_EA_v2.03.mq5 in MetaEditor.
+7. Wait for Railway to show v2.0.4 online.
+8. Open mt5/EVE_Momentum_Burst_EA_v2.04.mq5 in MetaEditor.
 9. Press F7 and confirm 0 errors.
-10. Attach v2.03 to XAUUSD M1.
+10. Attach v2.04 to XAUUSD M1.
 11. EA Inputs:
     InpRailwayBaseUrl=https://eve-momentum-burst-production.up.railway.app
     InpBotToken=EVE-MOMENTUM-DEMO-2026
 12. MT5 Tools > Options > Expert Advisors must contain the same https URL.
 13. Open the Railway dashboard and apply your chosen lot and ladder settings.
 
-v2.03 fixes invalid-price rejections, overlapping cancel/replace requests,
+v2.04 fixes invalid-price rejections, overlapping cancel/replace requests,
 duplicate order races, unsafe stop-and-reverse sequencing and premature flat reporting.

@@ -10,8 +10,8 @@ const DASHBOARD_ORIGIN = String(process.env.DASHBOARD_ORIGIN || '*').trim();
 const DATA_DIR = String(process.env.DATA_DIR || path.join(__dirname, '..', 'data')).trim();
 const SUPABASE_URL = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SUPABASE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
-const EA_DELAYED_MS = 20_000;
-const EA_OFFLINE_MS = 60_000;
+const EA_DELAYED_MS = 45_000;
+const EA_OFFLINE_MS = 120_000;
 const MAX = { scans: 40_000, baskets: 5_000, legs: 30_000, orders: 30_000, banks: 10_000, events: 5_000 };
 
 export const nowIso = () => new Date().toISOString();
@@ -88,7 +88,7 @@ export function validateSettings(input = {}, current = DEFAULT_SETTINGS) {
 let settings = validateSettings(loadJson(files.settings, DEFAULT_SETTINGS));
 
 const state = {
-  version: '2.0.3', service: 'EVE MOMENTUM BURST', mode: 'DEMO TEST MODE + TRANSACTION-SAFE STRADDLE/LADDER', startedAt: nowIso(),
+  version: '2.0.4', service: 'EVE MOMENTUM BURST', mode: 'OCO CAMPAIGN + HEARTBEAT-HARDENED LADDER', startedAt: nowIso(),
   control: { autonomous: String(process.env.AUTO_ENABLED || 'true').toLowerCase() !== 'false', emergency: false, manualNewsLock: false },
   command: { id: 0, action: 'NONE', createdAt: nowIso(), consumedAt: null, result: null },
   ea: {
@@ -96,7 +96,7 @@ const state = {
     balance: null, equity: null, margin: null, freeMargin: null, marginLevel: null,
     bid: null, ask: null, spreadPoints: null, medianSpreadPoints: null,
     terminalConnected: false, algoAllowed: false, autonomous: false, emergency: false,
-    engineState: 'WARMING', bracketState: 'NONE', bracketBuyPrice: 0, bracketSellPrice: 0,
+    engineState: 'WARMING', bracketState: 'NONE', campaignPhase: 'FLAT', campaignStartSide: 'NONE', campaignCurrentSide: 'NONE', campaignInvalidationPrice: 0, campaignBuyLegs: 0, campaignSellLegs: 0, campaignReversalCount: 0, telemetryQueueDepth: 0, bracketBuyPrice: 0, bracketSellPrice: 0,
     positionOpen: false, positionCount: 0, pendingCount: 0, side: 'NONE', totalLots: 0,
     averageEntry: null, currentPrice: null, protectedStop: null, floatingProfit: 0, peakBasketProfit: 0, basketMae: 0,
     basketStartedAt: null, positionsOpened: 0, maxConcurrentPositions: 0,
@@ -178,7 +178,7 @@ export function calculatePerformance(inputBaskets) {
       peakFloatingProfit: completed.reduce((max, item) => Math.max(max, safeNumber(item.peakBasketProfit)), 0),
       reversalSuccessRate: (() => { const r = completed.filter(item => item.reversalTriggered); return r.length ? r.filter(item => safeNumber(item.netProfit) > 0).length / r.length * 100 : 0; })()
     },
-    bySide: groupStats(completed, item => item.side),
+    bySide: groupStats(completed, item => item.startSide || item.side),
     byRegime: groupStats(completed, item => item.entryRegime),
     byBankReason: groupStats(completed, item => item.exitReason),
     byHour: groupStats(completed, item => { const d = new Date(safeNumber(item.entryTime)); return Number.isNaN(d.getTime()) ? 'UNKNOWN' : String(d.getUTCHours()).padStart(2, '0') + ':00 UTC'; }),
@@ -218,7 +218,7 @@ function authorised(request, url, body) {
 function serveStatic(request, response, pathname) {
   const map = { '/': ['index.html', 'text/html; charset=utf-8'], '/index.html': ['index.html', 'text/html; charset=utf-8'], '/app.js': ['app.js', 'text/javascript; charset=utf-8'], '/styles.css': ['styles.css', 'text/css; charset=utf-8'] };
   if (!map[pathname]) return false;
-  const [filename, type] = map[pathname]; sendText(request, response, 200, fs.readFileSync(path.join(__dirname, '..', 'public', filename)), type, { 'Cache-Control': 'public, max-age=30' }); return true;
+  const [filename, type] = map[pathname]; sendText(request, response, 200, fs.readFileSync(path.join(__dirname, '..', 'public', filename)), type, { 'Cache-Control': 'no-store' }); return true;
 }
 
 export function createHttpServer() {

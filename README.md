@@ -1,56 +1,50 @@
-# EVE MOMENTUM BURST v2.03
+# EVE MOMENTUM BURST v2.04
 
-A complete replacement for the EVE Momentum Burst demo project. The engine reconstructs the visible moving-straddle, stop-and-reverse, rolling-ladder and canary-banking behaviour observed in the supplied screenshots. It does not contain the original commercial EA's private source code.
+A complete replacement for EVE Momentum Burst v2.03. This version implements a strict OCO campaign engine, a controlled rolling ladder, canary banking and a non-blocking telemetry queue. It is a behavioural reconstruction based on the supplied evidence; it is not the original commercial EA source code.
 
-## Core execution model
+## Correct campaign sequence
 
-- XAUUSD M1 live-tick analysis
-- moving BUY STOP above price and SELL STOP below price
-- first triggered order selects the active direction
-- opposite pending stop becomes the reversal trigger
-- rolling same-direction position ladder while momentum remains strong
-- fixed broker-side SL and TP on every leg
-- individual break-even and graduated trailing
-- newest-position canary and basket peak-giveback banking
-- dashboard-controlled lot size, initial legs, maximum positions and total lots
-- detailed basket, leg, order, scan and banking records
+1. While flat, the EA builds one BUY STOP above price and one SELL STOP below price.
+2. Both entry orders must be confirmed before the straddle is marked ready.
+3. The first triggered order permanently selects the campaign's starting direction.
+4. The opposite entry-bracket order is cancelled and confirmed gone before ladder additions or reversal logic are permitted.
+5. If both entry orders cross before OCO cancellation completes, the first-triggered side is retained and the accidental second side is closed.
+6. Additional same-direction legs require price progress, a profitable basket, a profitable newest leg, spacing, acceleration and momentum confirmation.
+7. A separate reversal stop is not armed immediately. It is created only after the campaign has aged and developed protected profit.
+8. The reversal stop is fixed at the campaign's hard invalidation area rather than chasing ordinary M1 price noise.
+9. Canary and basket giveback rules bank the campaign before another straddle can be created.
+10. A post-campaign cooldown prevents immediate spread-paying re-entry in the same range.
 
-## v2.03 demo testing control
+## Connection hardening
 
-v2.03 keeps complete loss and performance tracking but adds a dashboard-controlled **Demo testing mode**, enabled by default. While it is ON, consecutive losses, daily bot P/L and basket count remain visible and are stored for analysis, but they cannot block new entries. Manual pause, news lock and emergency stop remain active. A **Reset testing counters** button clears the current EA day counters without deleting historical basket, leg, order, scan or banking records.
+- No HTTP call is made from `OnTick` or `OnTradeTransaction`.
+- Legs, orders, baskets, banking decisions, scans and events are queued locally.
+- The one-second timer sends at most one blocking network request per pass.
+- Heartbeats always have priority over command polling and evidence uploads.
+- WebRequest timeout is reduced to 800 ms.
+- Dashboard status remains CONNECTED for 45 seconds, DELAYED from 45 to 120 seconds, and OFFLINE only after 120 seconds.
+- A delayed dashboard does not stop local MT5 trade management.
 
-## v2.03 execution repair
+## Demo testing mode
 
-v2.03 replaces the aggressive cancel-and-recreate loop from v2.01 with a broker-aware synchronisation layer:
-
-- only one trade request is released at a time
-- pending orders are modified in place where possible
-- deletions are sent one ticket at a time and confirmed gone before another request
-- prices are rebuilt from the latest Bid/Ask immediately before submission
-- order prices are rounded in the safe direction to the symbol tick size
-- stop level, freeze level and an adaptive safety buffer are respected
-- invalid-price, locked, frozen, timeout and request-frequency errors trigger controlled backoff
-- position trailing changes only one ticket per cycle
-- mixed-direction reversal closes one old-direction leg per confirmed cycle
-- basket closing clears pending orders first, then closes positions one at a time
-- no basket is reported complete until positions and pending orders are both flat
+Enabled by default. Consecutive losses, daily P/L and basket count are recorded but cannot automatically lock new entries. Manual pause, news lock, close and emergency controls remain active.
 
 ## Repository structure
 
-- `mt5/EVE_Momentum_Burst_EA_v2.03.mq5` — complete EA source
+- `mt5/EVE_Momentum_Burst_EA_v2.04.mq5` — complete EA source
 - `railway/` — dashboard, controls, persistence, CSV exports and analysis
 - `supabase/schema.sql` — optional permanent evidence database
 - `docs/INSTALL-EASY.md` — deployment steps
-- `docs/STRATEGY.md` — operating logic
-- `docs/TESTING.md` — demo testing process
-- `docs/VALIDATION.md` — validation record
+- `docs/STRATEGY.md` — detailed campaign logic
+- `docs/TESTING.md` — demo validation process
+- `docs/VALIDATION.md` — checks completed in this package
 
 ## Identity
 
 - Magic number: `2207202603`
-- Trade comment: `EVE-MOMENTUM-V2`
+- Trade comment: `EVE-MOMENTUM-V2.04`
 - Railway root directory: `railway`
 - Chart: `XAUUSD M1`
 - Railway domain: `https://eve-momentum-burst-production.up.railway.app`
 
-MetaEditor remains the definitive MQL5 compiler check.
+MetaEditor is the definitive MQL5 compilation check.
