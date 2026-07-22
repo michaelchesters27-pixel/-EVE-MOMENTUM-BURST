@@ -1,76 +1,32 @@
-# Easy upgrade from v1.00 to v1.10
+# Easy installation
 
-## 1. Make the current bot flat
+## GitHub and Railway
 
-On the existing Momentum Burst dashboard confirm:
+1. Stop and remove the old Momentum Burst EA only after its positions and orders are flat.
+2. Replace the complete contents of the `EVE-MOMENTUM-BURST` GitHub repository with this package.
+3. Railway Root Directory: `railway`.
+4. Railway variables:
+   - `BOT_TOKEN=EVE-MOMENTUM-DEMO-2026`
+   - `AUTO_ENABLED=true`
+   - `DATA_DIR=/data`
+5. Wait for Railway deployment to show version `v2.0.0`.
 
-- active position: none
-- pending orders: zero
-- close pending: no
+## MetaEditor
 
-Then press **Disable autonomous**.
+1. Open `mt5/EVE_Momentum_Burst_EA_v2.00.mq5`.
+2. Press F7.
+3. Confirm MetaEditor reports zero errors before attachment.
 
-Do not replace the EA while it has a position or pending order.
+## MT5
 
-## 2. Replace GitHub completely
+1. Open a separate XAUUSD M1 chart.
+2. Add `https://eve-momentum-burst-production.up.railway.app` under Tools > Options > Expert Advisors > Allow WebRequest.
+3. Attach `EVE_Momentum_Burst_EA_v2.00`.
+4. Set:
+   - `InpRailwayBaseUrl=https://eve-momentum-burst-production.up.railway.app`
+   - `InpBotToken=EVE-MOMENTUM-DEMO-2026`
+5. Tick Allow Algo Trading and keep the global Algo Trading button enabled.
 
-Open the existing `EVE-MOMENTUM-BURST` GitHub repository.
+## Dashboard
 
-Delete the old repository contents and upload **all contents** of the v1.10 GitHub-ready folder. Do not upload this over EVESBOT or EVE Gold Runner.
-
-Railway settings remain:
-
-```text
-Root Directory: railway
-Start command: npm start
-```
-
-No new Railway variables are required:
-
-```text
-BOT_TOKEN=EVE-MOMENTUM-DEMO-2026
-AUTO_ENABLED=true
-DATA_DIR=/data
-```
-
-Supabase remains optional.
-
-## 3. Compile the new EA
-
-1. MT5 -> File -> Open Data Folder.
-2. Open `MQL5` -> `Experts`.
-3. Copy `EVE_Momentum_Burst_EA_v1.10.mq5` into that folder.
-4. Press F4 to open MetaEditor.
-5. Open the new v1.10 file.
-6. Press F7.
-7. Continue only when MetaEditor says `0 errors`.
-
-## 4. Replace the chart EA
-
-1. Return to MT5.
-2. Open the XAUUSD M1 chart used by v1.00.
-3. Right-click -> Expert List.
-4. Remove `EVE_Momentum_Burst_EA_v1.00`.
-5. Drag `EVE_Momentum_Burst_EA_v1.10` onto that M1 chart.
-6. Tick Allow Algo Trading.
-7. In Inputs use:
-
-```text
-InpRailwayBaseUrl=https://eve-momentum-burst-production.up.railway.app
-InpBotToken=EVE-MOMENTUM-DEMO-2026
-```
-
-Keep the generated Railway URL if it differs from the example.
-
-## 5. Verify health
-
-Open the Railway dashboard and confirm:
-
-- Railway ONLINE
-- MT5 EA CONNECTED
-- EA version 1.10
-- live state changes among WARMING, IDLE, ARMED and BURST
-- autonomous ON
-- positions 0 and pending 0 when flat
-
-The engine needs roughly 12 seconds of live ticks after attachment before it can calculate all velocity windows.
+Open the Railway domain, enter the same token, then use Lot and Ladder Control. Press Apply settings. The EA receives changes during its next control poll.

@@ -3,129 +3,147 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EVE Momentum Burst v1.10</title>
+  <title>EVE Momentum Burst v2.00</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <main class="wrap">
-    <header class="hero">
-      <div>
-        <p class="eyebrow">XAUUSD • BROKER-NATIVE M1 • LIVE INTRABAR ENGINE</p>
-        <h1>EVE MOMENTUM BURST</h1>
-        <p class="subtitle">Flipper-mode behavioural reconstruction: live acceleration, controlled position bursts, continuation stops and fast basket banking.</p>
+<main class="wrap">
+  <header class="hero">
+    <div>
+      <p class="eyebrow">XAUUSD • M1 • MOVING STRADDLE • ROLLING MOMENTUM LADDER</p>
+      <h1>EVE MOMENTUM BURST</h1>
+      <p class="subtitle">Behavioural reconstruction engine with two-sided breakout orders, progressive momentum entries, individual protection, canary banking and complete evidence collection.</p>
+    </div>
+    <span id="systemBadge" class="badge neutral">CONNECTING</span>
+  </header>
+
+  <section class="panel access">
+    <div><p class="eyebrow">SECURE CONNECTION</p><h2>Dashboard access</h2></div>
+    <div class="connect-row"><input id="token" type="password" autocomplete="off" placeholder="BOT_TOKEN from Railway Variables"><button id="connect">Connect</button></div>
+    <p id="message" class="message">Enter the exact Railway BOT_TOKEN.</p>
+  </section>
+
+  <section class="status-grid">
+    <article class="card"><p class="label">RAILWAY</p><strong id="railway">—</strong><span id="version">v—</span></article>
+    <article class="card"><p class="label">MT5 EA</p><strong id="eaStatus">—</strong><span id="eaDetail">Waiting</span></article>
+    <article class="card"><p class="label">ENGINE STATE</p><strong id="engineState">—</strong><span id="engineDetail">No heartbeat</span></article>
+    <article class="card"><p class="label">MOMENTUM</p><strong id="momentumState">—</strong><span id="momentumDetail">No live scan</span></article>
+  </section>
+
+  <section class="panel">
+    <div class="section-head">
+      <div><p class="eyebrow">LIVE CONTROL</p><h2 id="autoTitle">AUTONOMOUS —</h2></div>
+      <span id="scanTime" class="muted">No live snapshot</span>
+    </div>
+    <div id="blockReason" class="notice">Waiting for EA data.</div>
+    <div class="score-grid eight">
+      <article><span>Live direction</span><strong id="watchDirection">—</strong></article>
+      <article><span>BUY score</span><strong id="buyScore">0/11</strong></article>
+      <article><span>SELL score</span><strong id="sellScore">0/11</strong></article>
+      <article><span>Bracket state</span><strong id="bracketState">—</strong></article>
+      <article><span>BUY STOP</span><strong id="buyStop">—</strong></article>
+      <article><span>SELL STOP</span><strong id="sellStop">—</strong></article>
+      <article><span>1s / 3s velocity</span><strong id="velocities">—</strong></article>
+      <article><span>Tick expansion</span><strong id="tickRate">—</strong></article>
+    </div>
+    <div class="buttons">
+      <button data-action="ENABLE_AUTO" class="positive">Enable autonomous</button>
+      <button data-action="DISABLE_AUTO" class="danger">Disable autonomous</button>
+      <button data-action="REBUILD_BRACKET">Rebuild bracket</button>
+      <button data-action="PAUSE_EA">Pause new entries</button>
+      <button data-action="RESUME_EA">Resume</button>
+      <button data-action="NEWS_LOCK_ON">News lock ON</button>
+      <button data-action="NEWS_LOCK_OFF">News lock OFF</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="section-head"><div><p class="eyebrow">LOT AND LADDER CONTROL</p><h2>Settings for new trades</h2></div><span id="settingsVersion" class="muted">Settings v—</span></div>
+    <div class="settings-grid">
+      <label><span>Fixed lot per position</span><input id="fixedLot" type="number" min="0.01" step="0.01"></label>
+      <label><span>Initial positions</span><input id="initialPositions" type="number" min="1" step="1"></label>
+      <label><span>Maximum open positions</span><input id="maxPositions" type="number" min="1" step="1"></label>
+      <label><span>Maximum total lots</span><input id="maxTotalLots" type="number" min="0.01" step="0.01"></label>
+      <label class="switch-row"><span>Balance-scaled lot mode</span><input id="useEquityScaling" type="checkbox"></label>
+      <label><span>Equity for each 0.01 lot</span><input id="equityPer001Lot" type="number" min="10" step="10"></label>
+    </div>
+    <div class="buttons"><button id="applySettings" class="positive">Apply settings</button></div>
+    <p class="notice">Changes apply to future entries. Existing positions are never resized.</p>
+  </section>
+
+  <section class="two-col">
+    <article class="panel">
+      <p class="eyebrow">ACTIVE MOMENTUM BASKET</p>
+      <div class="position-head"><h2 id="basketTitle">NONE</h2><span id="basketState" class="badge neutral">IDLE</span></div>
+      <div id="floatingProfit" class="position-profit">$0.00</div>
+      <div class="kv-grid">
+        <div><span>Positions / pending</span><strong id="positionCounts">0 / 0</strong></div>
+        <div><span>Total lots</span><strong id="totalLots">0.00</strong></div>
+        <div><span>Average entry</span><strong id="averageEntry">—</strong></div>
+        <div><span>Protected stop</span><strong id="protectedStop">—</strong></div>
+        <div><span>Peak basket profit</span><strong id="peakProfit">$0.00</strong></div>
+        <div><span>Worst floating P/L</span><strong id="basketMae">$0.00</strong></div>
+        <div><span>Newest ticket</span><strong id="newestTicket">—</strong></div>
+        <div><span>Newest current / peak</span><strong id="newestProfit">—</strong></div>
+        <div><span>Newest age</span><strong id="newestAge">—</strong></div>
+        <div><span>Bank candidate</span><strong id="bankCandidate">NO</strong></div>
       </div>
-      <div id="systemBadge" class="badge neutral">CONNECTING</div>
-    </header>
+      <div id="bankReason" class="notice">No banking signal.</div>
+      <div id="closeInfo" class="notice">No close pending.</div>
+      <div class="buttons"><button data-action="CLOSE_BASKET">Close full basket</button><button data-action="EMERGENCY_STOP" class="danger">Emergency stop</button><button data-action="RESET_EMERGENCY">Reset emergency</button></div>
+    </article>
 
-    <section class="panel access">
-      <div><p class="eyebrow">SECURE CONNECTION</p><h2>Dashboard access</h2></div>
-      <div class="connect-row"><input id="token" type="password" autocomplete="off" placeholder="BOT_TOKEN from Railway Variables"><button id="connect">Connect</button></div>
-      <p id="message" class="message">Enter the exact BOT_TOKEN used in Railway.</p>
-    </section>
-
-    <section class="status-grid">
-      <article class="card"><p class="label">RAILWAY</p><strong id="railway">—</strong><span id="version">v—</span></article>
-      <article class="card"><p class="label">MT5 EA</p><strong id="eaStatus">—</strong><span id="eaDetail">Waiting</span></article>
-      <article class="card"><p class="label">LIVE MOMENTUM STATE</p><strong id="momentumState">—</strong><span id="stateDetail">No live scan</span></article>
-      <article class="card"><p class="label">MARKET REGIME</p><strong id="regime">—</strong><span id="regimeDetail">No data</span></article>
-    </section>
-
-    <section class="panel">
-      <div class="section-head">
-        <div><p class="eyebrow">LIVE FLIPPER-MODE BRAIN</p><h2 id="autoTitle">AUTONOMOUS —</h2></div>
-        <span id="scanTime" class="muted">No live snapshot received</span>
+    <article class="panel">
+      <p class="eyebrow">ACCOUNT AND EXECUTION</p><h2>Live MT5</h2>
+      <div class="kv-grid account">
+        <div><span>Balance</span><strong id="balance">—</strong></div>
+        <div><span>Equity</span><strong id="equity">—</strong></div>
+        <div><span>Daily bot P/L</span><strong id="dailyPnl">—</strong></div>
+        <div><span>Baskets today</span><strong id="basketsToday">—</strong></div>
+        <div><span>Consecutive losses</span><strong id="lossStreak">—</strong></div>
+        <div><span>Algo trading</span><strong id="algo">—</strong></div>
+        <div><span>Spread</span><strong id="spread">—</strong></div>
+        <div><span>Extension</span><strong id="extension">—</strong></div>
       </div>
-      <div id="blockReason" class="notice">Waiting for EA data.</div>
-      <div class="score-grid eight">
-        <article><span>Watch direction</span><strong id="watchDirection">—</strong></article>
-        <article><span>BUY score</span><strong id="buyScore">0/11</strong></article>
-        <article><span>SELL score</span><strong id="sellScore">0/11</strong></article>
-        <article><span>M5 support</span><strong id="m5Confirm">—</strong></article>
-        <article><span>1-second velocity</span><strong id="velocity1">—</strong></article>
-        <article><span>3-second velocity</span><strong id="velocity3">—</strong></article>
-        <article><span>Tick-rate expansion</span><strong id="tickRate">—</strong></article>
-        <article><span>Extension / live limit</span><strong id="extension">—</strong></article>
+      <p id="lastEvent" class="notice">Waiting for EA event.</p>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="section-head">
+      <div><p class="eyebrow">PERFORMANCE DATABASE</p><h2>Completed momentum baskets</h2></div>
+      <div class="export-links">
+        <a data-export="baskets" href="#">Baskets CSV</a><a data-export="legs" href="#">Legs CSV</a><a data-export="orders" href="#">Orders CSV</a><a data-export="banks" href="#">Banking CSV</a><a data-export="scans" href="#">Scans CSV</a>
       </div>
-      <div class="buttons">
-        <button data-action="ENABLE_AUTO" class="positive">Enable autonomous</button>
-        <button data-action="DISABLE_AUTO" class="danger">Disable autonomous</button>
-        <button data-action="PAUSE_EA">Pause new entries/adds</button>
-        <button data-action="RESUME_EA">Resume</button>
-        <button data-action="NEWS_LOCK_ON">News lock ON</button>
-        <button data-action="NEWS_LOCK_OFF">News lock OFF</button>
-      </div>
-    </section>
+    </div>
+    <div class="performance-grid twelve">
+      <article><span>Baskets</span><strong id="statBaskets">0</strong></article>
+      <article><span>Total legs</span><strong id="statLegs">0</strong></article>
+      <article><span>Win rate</span><strong id="statWinRate">0%</strong></article>
+      <article><span>Net profit</span><strong id="statNet">$0.00</strong></article>
+      <article><span>Profit factor</span><strong id="statPf">0.00</strong></article>
+      <article><span>Average basket</span><strong id="statAvg">$0.00</strong></article>
+      <article><span>Average duration</span><strong id="statDuration">0s</strong></article>
+      <article><span>Best basket</span><strong id="statBest">$0.00</strong></article>
+      <article><span>Worst basket</span><strong id="statWorst">$0.00</strong></article>
+      <article><span>Average giveback</span><strong id="statGiveback">$0.00</strong></article>
+      <article><span>Average max drawdown</span><strong id="statDrawdown">$0.00</strong></article>
+      <article><span>Peak floating profit</span><strong id="statPeak">$0.00</strong></article>
+    </div>
+  </section>
 
-    <section class="two-col">
-      <article class="panel">
-        <p class="eyebrow">ACTIVE MOMENTUM BASKET</p>
-        <div class="position-head"><h2 id="basketTitle">NONE</h2><span id="basketState" class="badge neutral">IDLE</span></div>
-        <div class="position-profit" id="floatingProfit">$0.00</div>
-        <div class="progress"><div id="targetProgress"></div></div>
-        <div class="kv-grid">
-          <div><span>Positions / pending</span><strong id="positionCounts">0 / 0</strong></div>
-          <div><span>Total lots</span><strong id="totalLots">0.00</strong></div>
-          <div><span>Average entry</span><strong id="averageEntry">—</strong></div>
-          <div><span>Protected stop</span><strong id="protectedStop">—</strong></div>
-          <div><span>Peak basket profit</span><strong id="peakProfit">$0.00</strong></div>
-          <div><span>Worst floating P/L</span><strong id="basketMae">$0.00</strong></div>
-          <div><span>Money target</span><strong id="basketTarget">$0.00</strong></div>
-          <div><span>Trail starts</span><strong id="trailStart">$0.00</strong></div>
-          <div><span>Allowed giveback</span><strong id="giveback">$0.00</strong></div>
-        </div>
-        <div id="closeInfo" class="notice">No basket close pending.</div>
-        <div class="buttons">
-          <button data-action="CLOSE_BASKET">Close full basket</button>
-          <button data-action="EMERGENCY_STOP" class="danger">Emergency stop</button>
-          <button data-action="RESET_EMERGENCY">Reset emergency</button>
-        </div>
-      </article>
+  <section class="analysis-grid">
+    <article class="panel table-panel"><p class="eyebrow">BUY VS SELL</p><div class="table-wrap"><table><thead><tr><th>Side</th><th>Baskets</th><th>Win rate</th><th>Net</th><th>PF</th></tr></thead><tbody id="sideRows"></tbody></table></div></article>
+    <article class="panel table-panel"><p class="eyebrow">BANKING REASONS</p><div class="table-wrap"><table><thead><tr><th>Reason</th><th>Baskets</th><th>Win rate</th><th>Net</th></tr></thead><tbody id="bankStatRows"></tbody></table></div></article>
+  </section>
 
-      <article class="panel">
-        <p class="eyebrow">ACCOUNT AND RISK</p><h2>Live MT5</h2>
-        <div class="kv-grid account">
-          <div><span>Balance</span><strong id="balance">—</strong></div>
-          <div><span>Equity</span><strong id="equity">—</strong></div>
-          <div><span>Daily bot P/L</span><strong id="dailyPnl">—</strong></div>
-          <div><span>Baskets today</span><strong id="basketsToday">—</strong></div>
-          <div><span>Consecutive losses</span><strong id="lossStreak">—</strong></div>
-          <div><span>Algo trading</span><strong id="algo">—</strong></div>
-          <div><span>Spread</span><strong id="spread">—</strong></div>
-          <div><span>Live body</span><strong id="bodyAtr">—</strong></div>
-        </div>
-        <p id="lastEvent" class="notice">Waiting for EA event.</p>
-      </article>
-    </section>
-
-    <section class="panel">
-      <div class="section-head">
-        <div><p class="eyebrow">PERFORMANCE DATABASE</p><h2>Completed momentum baskets</h2></div>
-        <div class="export-links"><a id="exportTrades" href="#">Export baskets CSV</a><a id="exportScans" href="#">Export live scans CSV</a></div>
-      </div>
-      <div class="performance-grid eight">
-        <article><span>Baskets</span><strong id="statBaskets">0</strong></article>
-        <article><span>Total position legs</span><strong id="statLegs">0</strong></article>
-        <article><span>Win rate</span><strong id="statWinRate">0%</strong></article>
-        <article><span>Net profit</span><strong id="statNet">$0.00</strong></article>
-        <article><span>Profit factor</span><strong id="statPf">0.00</strong></article>
-        <article><span>Average basket</span><strong id="statAvg">$0.00</strong></article>
-        <article><span>Average duration</span><strong id="statDuration">0s</strong></article>
-        <article><span>Worst basket</span><strong id="statWorst">$0.00</strong></article>
-      </div>
-    </section>
-
-    <section class="panel table-panel">
-      <p class="eyebrow">LATEST LIVE MOMENTUM SNAPSHOTS</p>
-      <div class="table-wrap"><table><thead><tr><th>Time</th><th>State</th><th>Watch</th><th>BUY</th><th>SELL</th><th>v1</th><th>v3</th><th>Ticks</th><th>Extension</th><th>Reason</th></tr></thead><tbody id="scanRows"></tbody></table></div>
-    </section>
-
-    <section class="panel table-panel">
-      <p class="eyebrow">COMPLETED BASKETS</p>
-      <div class="table-wrap"><table><thead><tr><th>Exit</th><th>Side</th><th>Legs</th><th>Lots</th><th>Score</th><th>Duration</th><th>Net</th><th>Peak</th><th>MAE</th><th>Reason</th></tr></thead><tbody id="tradeRows"></tbody></table></div>
-    </section>
-
-    <section class="panel table-panel"><p class="eyebrow">LATEST EVENTS</p><div id="eventRows" class="events"></div></section>
-  </main>
-  <script src="/app.js"></script>
+  <section class="panel table-panel"><p class="eyebrow">COMPLETED BASKETS</p><div class="table-wrap"><table><thead><tr><th>Exit</th><th>Side</th><th>Legs</th><th>Lot</th><th>Exposure</th><th>Duration</th><th>Net</th><th>Peak</th><th>Giveback</th><th>MAE</th><th>Reason</th></tr></thead><tbody id="basketRows"></tbody></table></div></section>
+  <section class="panel table-panel"><p class="eyebrow">INDIVIDUAL POSITION LEGS</p><div class="table-wrap"><table><thead><tr><th>Time</th><th>Action</th><th>Side</th><th>Ticket</th><th>Lot</th><th>Price</th><th>Profit</th><th>Reason</th></tr></thead><tbody id="legRows"></tbody></table></div></section>
+  <section class="panel table-panel"><p class="eyebrow">PENDING ORDER ACTIVITY</p><div class="table-wrap"><table><thead><tr><th>Time</th><th>Action</th><th>Role</th><th>Type</th><th>Ticket</th><th>Lot</th><th>Price</th><th>Reason</th></tr></thead><tbody id="orderRows"></tbody></table></div></section>
+  <section class="panel table-panel"><p class="eyebrow">BANKING DECISIONS</p><div class="table-wrap"><table><thead><tr><th>Time</th><th>Side</th><th>Basket P/L</th><th>Peak</th><th>Newest</th><th>Newest peak</th><th>Score</th><th>Reason</th></tr></thead><tbody id="bankRows"></tbody></table></div></section>
+  <section class="panel table-panel"><p class="eyebrow">LATEST MOMENTUM SCANS</p><div class="table-wrap"><table><thead><tr><th>Time</th><th>State</th><th>Watch</th><th>BUY</th><th>SELL</th><th>v1</th><th>v3</th><th>Ticks</th><th>Extension</th><th>Reason</th></tr></thead><tbody id="scanRows"></tbody></table></div></section>
+  <section class="panel table-panel"><p class="eyebrow">LATEST EVENTS</p><div id="eventRows" class="events"></div></section>
+</main>
+<script src="/app.js"></script>
 </body>
 </html>

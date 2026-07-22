@@ -1,3 +1,4 @@
-EVE MOMENTUM BURST v1.10
-Mode: FLIPPER-MODE LIVE BURST
-Release: controlled multi-position behavioural reconstruction
+EVE Momentum Burst v2.00
+Engine: Moving Straddle + Rolling Momentum Ladder
+MT5: EVE_Momentum_Burst_EA_v2.00.mq5
+Railway: v2.0.0

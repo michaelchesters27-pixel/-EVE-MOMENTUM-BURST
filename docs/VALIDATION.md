@@ -1,16 +1,11 @@
 # Validation record
 
-Completed in the build environment:
+Automated validation performed in the build environment:
 
-- Railway server JavaScript syntax check
-- dashboard JavaScript syntax check
-- clean package-lock generation
-- npm audit: zero dependencies and zero vulnerabilities
-- four Node tests passed
-- repository path and required-file checks
-- MQL source structural checks for balanced braces, duplicate function names and required safety features
-- ZIP integrity test
+- Node syntax check for Railway server and dashboard JavaScript
+- Node test suite for detailed performance calculations, settings validation, CSV escaping and HTTP server construction
+- Local API integration checks
+- ZIP integrity check
+- MQL5 static checks for balanced braces/parentheses, duplicate function definitions and undefined EA input references
 
-The MQL source must still be compiled in MetaEditor because MetaEditor is not available in this environment. A successful release requires the user to confirm `0 errors` after pressing F7.
-
-This release is a behavioural reconstruction based on screenshots and trade evidence. It is not validated as the original proprietary algorithm and has no profitability guarantee.
+The MQL5 EA must still be compiled in the user's MetaEditor. A static source check is not a MetaEditor compilation.

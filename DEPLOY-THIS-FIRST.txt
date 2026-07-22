@@ -1,35 +1,30 @@
-EVE MOMENTUM BURST v1.10 - DEPLOY THIS FIRST
+EVE MOMENTUM BURST v2.00 — FULL REPLACEMENT
 
-This is a FULL replacement for the existing EVE-MOMENTUM-BURST GitHub repository.
-It is not a patch.
+This ZIP replaces only the EVE-MOMENTUM-BURST repository.
+It does not change EVE Gold Runner or EVESBOT.
 
-BEFORE REPLACING v1.00
-1. Confirm the Momentum Burst dashboard shows no active position and no pending order.
-2. Disable autonomous mode.
-3. Remove EVE_Momentum_Burst_EA_v1.00 from the XAUUSD M1 chart.
-
-GITHUB / RAILWAY
-1. Replace the entire repository contents with this folder.
-2. Keep Railway Root Directory: railway
-3. Existing Railway variables remain correct:
+1. Confirm the old Momentum Burst EA has no open positions or pending orders.
+2. Disable autonomous mode and remove v1.10 from the XAUUSD M1 chart.
+3. Delete the old repository contents and upload everything inside this folder.
+4. Railway Root Directory remains: railway
+5. Keep these Railway variables:
    BOT_TOKEN=EVE-MOMENTUM-DEMO-2026
    AUTO_ENABLED=true
    DATA_DIR=/data
-4. Wait for Railway to deploy v1.1.0.
+6. Wait for Railway to show v2.0.0 online.
+7. Open mt5/EVE_Momentum_Burst_EA_v2.00.mq5 in MetaEditor and press F7.
+8. Attach the compiled EA to XAUUSD M1.
+9. EA Inputs:
+   InpRailwayBaseUrl=https://eve-momentum-burst-production.up.railway.app
+   InpBotToken=EVE-MOMENTUM-DEMO-2026
+10. MT5 Tools > Options > Expert Advisors must contain the same https URL.
+11. Open the Railway dashboard and apply the lot/ladder settings you want.
 
-MT5
-1. Copy mt5/EVE_Momentum_Burst_EA_v1.10.mq5 into MQL5/Experts.
-2. Open it in MetaEditor and press F7.
-3. Continue only after MetaEditor reports 0 errors.
-4. Attach it to the existing XAUUSD M1 chart.
-5. In Inputs use the same Railway URL and BOT_TOKEN already used by v1.00.
-6. Confirm Algo Trading is green.
+Default dashboard settings:
+- Fixed lot: 0.01
+- Initial positions: 1
+- Maximum positions: 20
+- Maximum total lots: 0.20
+- Balance scaling: OFF
 
-SAFE DEFAULT BURST
-- 3 x 0.01 initial positions
-- maximum 5 positions
-- maximum 0.05 total lots
-- continuation orders add only while the basket is already profitable
-- no martingale and no averaging into losses
-
-This is a behavioural reconstruction from visible evidence. It is not Mark Flipper's private source code or guaranteed profitability.
+The dashboard settings affect new positions only. Existing positions are never resized.
