@@ -1,0 +1,23 @@
+EVE MOMENTUM BURST v1.00
+
+THIS IS A SEPARATE THIRD BOT.
+DO NOT REPLACE EVESBOT OR EVE GOLD RUNNER.
+
+1. Create a NEW GitHub repository: EVE-MOMENTUM-BURST
+2. Upload everything inside this ZIP.
+3. Create a NEW Railway project from that repository.
+4. Railway Root Directory: railway
+5. Railway Variables:
+   BOT_TOKEN = make one private token
+   AUTO_ENABLED = true
+   DATA_DIR = /data
+6. Copy the Railway public URL.
+7. Open mt5/EVE_Momentum_Burst_EA_v1.00.mq5 in MetaEditor.
+8. Compile. Continue only with 0 errors.
+9. Add the Railway URL under MT5 Tools > Options > Expert Advisors > Allow WebRequest.
+10. Attach the EA to a NEW XAUUSD M1 chart.
+11. Enter the same Railway URL and BOT_TOKEN in the EA Inputs.
+12. Keep fixed lot at 0.01 and enable Algo Trading.
+13. Open the Railway URL, enter BOT_TOKEN, press Connect.
+
+Full instructions: docs/INSTALL-EASY.md

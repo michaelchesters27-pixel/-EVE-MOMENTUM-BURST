@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EVE Momentum Burst</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">XAUUSD • BROKER-NATIVE M1 RESEARCH BOT</p>
+        <h1>EVE MOMENTUM BURST</h1>
+        <p class="subtitle">Transparent momentum scoring, one-position safety and complete evidence collection.</p>
+      </div>
+      <div id="systemBadge" class="badge neutral">CONNECTING</div>
+    </header>
+
+    <section class="panel access">
+      <div>
+        <p class="eyebrow">SECURE CONNECTION</p>
+        <h2>Dashboard access</h2>
+      </div>
+      <div class="connect-row">
+        <input id="token" type="password" autocomplete="off" placeholder="BOT_TOKEN from Railway Variables">
+        <button id="connect">Connect</button>
+      </div>
+      <p id="message" class="message">Enter the exact BOT_TOKEN used in Railway.</p>
+    </section>
+
+    <section class="status-grid">
+      <article class="card"><p class="label">RAILWAY</p><strong id="railway">—</strong><span id="version">v—</span></article>
+      <article class="card"><p class="label">MT5 EA</p><strong id="eaStatus">—</strong><span id="eaDetail">Waiting</span></article>
+      <article class="card"><p class="label">BRAIN DECISION</p><strong id="decision">—</strong><span id="decisionDetail">No scan</span></article>
+      <article class="card"><p class="label">MARKET REGIME</p><strong id="regime">—</strong><span id="regimeDetail">No data</span></article>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div><p class="eyebrow">AUTONOMOUS CONTROL</p><h2 id="autoTitle">AUTONOMOUS —</h2></div>
+        <span id="scanTime" class="muted">No scan received</span>
+      </div>
+      <div id="blockReason" class="notice">Waiting for EA data.</div>
+      <div class="score-grid">
+        <article><span>BUY score</span><strong id="buyScore">0/11</strong></article>
+        <article><span>SELL score</span><strong id="sellScore">0/11</strong></article>
+        <article><span>Score gap</span><strong id="scoreGap">0</strong></article>
+        <article><span>M5 confirmation</span><strong id="m5Confirm">—</strong></article>
+        <article><span>Spread</span><strong id="spread">—</strong></article>
+        <article><span>Extension</span><strong id="extension">—</strong></article>
+      </div>
+      <div class="buttons">
+        <button data-action="ENABLE_AUTO" class="positive">Enable autonomous</button>
+        <button data-action="DISABLE_AUTO" class="danger">Disable autonomous</button>
+        <button data-action="NEWS_LOCK_ON">News lock ON</button>
+        <button data-action="NEWS_LOCK_OFF">News lock OFF</button>
+      </div>
+    </section>
+
+    <section class="two-col">
+      <article class="panel">
+        <p class="eyebrow">ACTIVE POSITION</p>
+        <div class="position-head"><h2 id="positionTitle">NONE</h2><span id="positionState" class="badge neutral">IDLE</span></div>
+        <div class="position-profit" id="floatingProfit">$0.00</div>
+        <div class="kv-grid">
+          <div><span>Entry</span><strong id="entryPrice">—</strong></div>
+          <div><span>Current</span><strong id="currentPrice">—</strong></div>
+          <div><span>Stop</span><strong id="sl">—</strong></div>
+          <div><span>Target</span><strong id="tp">—</strong></div>
+          <div><span>MFE</span><strong id="mfe">$0.00</strong></div>
+          <div><span>MAE</span><strong id="mae">$0.00</strong></div>
+        </div>
+        <div id="closeInfo" class="notice">No close pending.</div>
+        <div class="buttons">
+          <button data-action="CLOSE_POSITION">Close bot position</button>
+          <button data-action="EMERGENCY_STOP" class="danger">Emergency stop</button>
+          <button data-action="RESET_EMERGENCY">Reset emergency</button>
+        </div>
+      </article>
+
+      <article class="panel">
+        <p class="eyebrow">ACCOUNT STATUS</p>
+        <h2>Live MT5</h2>
+        <div class="kv-grid account">
+          <div><span>Balance</span><strong id="balance">—</strong></div>
+          <div><span>Equity</span><strong id="equity">—</strong></div>
+          <div><span>Daily bot P/L</span><strong id="dailyPnl">—</strong></div>
+          <div><span>Trades today</span><strong id="tradesToday">—</strong></div>
+          <div><span>Consecutive losses</span><strong id="lossStreak">—</strong></div>
+          <div><span>Algo trading</span><strong id="algo">—</strong></div>
+        </div>
+        <p id="lastEvent" class="notice">Waiting for EA event.</p>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div><p class="eyebrow">PERFORMANCE DATABASE</p><h2>Completed trades</h2></div>
+        <div class="export-links">
+          <a id="exportTrades" href="#">Export trades CSV</a>
+          <a id="exportScans" href="#">Export scans CSV</a>
+        </div>
+      </div>
+      <div class="performance-grid">
+        <article><span>Trades</span><strong id="statTrades">0</strong></article>
+        <article><span>Win rate</span><strong id="statWinRate">0%</strong></article>
+        <article><span>Net profit</span><strong id="statNet">$0.00</strong></article>
+        <article><span>Profit factor</span><strong id="statPf">0.00</strong></article>
+        <article><span>Average trade</span><strong id="statAvg">$0.00</strong></article>
+        <article><span>Worst trade</span><strong id="statWorst">$0.00</strong></article>
+      </div>
+    </section>
+
+    <section class="panel table-panel">
+      <p class="eyebrow">LATEST M1 SCANS</p>
+      <div class="table-wrap"><table><thead><tr><th>Time</th><th>Decision</th><th>BUY</th><th>SELL</th><th>Regime</th><th>Reason</th></tr></thead><tbody id="scanRows"></tbody></table></div>
+    </section>
+
+    <section class="panel table-panel">
+      <p class="eyebrow">COMPLETED TRADES</p>
+      <div class="table-wrap"><table><thead><tr><th>Exit</th><th>Side</th><th>Score</th><th>Entry</th><th>Exit</th><th>Net</th><th>MFE</th><th>MAE</th><th>Reason</th></tr></thead><tbody id="tradeRows"></tbody></table></div>
+    </section>
+
+    <section class="panel table-panel">
+      <p class="eyebrow">LATEST EVENTS</p>
+      <div id="eventRows" class="events"></div>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
