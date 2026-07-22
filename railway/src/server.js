@@ -86,7 +86,7 @@ export function validateSettings(input = {}, current = DEFAULT_SETTINGS) {
 let settings = validateSettings(loadJson(files.settings, DEFAULT_SETTINGS));
 
 const state = {
-  version: '2.0.6', service: 'EVE MOMENTUM BURST', mode: 'SCORE-DECOUPLED PRICE TRIGGERS + 2-TRIGGER CONFIRMATION + PROFIT-LOCK LADDER', startedAt: nowIso(),
+  version: '2.0.8', service: 'EVE MOMENTUM BURST', mode: 'EXECUTION-GUARDED PRICE TRIGGERS + 2-TRIGGER CONFIRMATION + PROFIT-LOCK LADDER', startedAt: nowIso(),
   control: { autonomous: String(process.env.AUTO_ENABLED || 'true').toLowerCase() !== 'false', emergency: false, manualNewsLock: false },
   command: { id: 0, action: 'NONE', createdAt: nowIso(), consumedAt: null, result: null },
   ea: {

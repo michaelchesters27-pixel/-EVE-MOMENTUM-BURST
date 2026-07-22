@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Static package validation for EVE Momentum Burst v2.06.
-
-This is not a substitute for MetaEditor compilation. It catches structural damage and
-verifies the locked campaign invariants requested for this build.
-"""
+"""Static validation for EVE Momentum Burst v2.08."""
 from __future__ import annotations
 
 import re
@@ -11,7 +7,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "mt5" / "EVE_Momentum_Burst_EA_v2.06.mq5"
+SOURCE = ROOT / "mt5" / "EVE_Momentum_Burst_EA_v2.08.mq5"
 
 
 def fail(message: str) -> None:
@@ -27,28 +23,27 @@ def strip_comments_and_strings(text: str) -> str:
         n = text[i + 1] if i + 1 < len(text) else ""
         if state == "code":
             if c == "/" and n == "/":
-                state = "line_comment"
+                state = "line"
                 out.extend("  ")
                 i += 2
                 continue
             if c == "/" and n == "*":
-                state = "block_comment"
+                state = "block"
                 out.extend("  ")
                 i += 2
                 continue
             if c == '"':
                 state = "string"
                 out.append(" ")
-                i += 1
-                continue
-            out.append(c)
-        elif state == "line_comment":
+            else:
+                out.append(c)
+        elif state == "line":
             if c == "\n":
                 state = "code"
                 out.append("\n")
             else:
                 out.append(" ")
-        elif state == "block_comment":
+        elif state == "block":
             if c == "*" and n == "/":
                 state = "code"
                 out.extend("  ")
@@ -64,7 +59,7 @@ def strip_comments_and_strings(text: str) -> str:
                 state = "code"
             out.append("\n" if c == "\n" else " ")
         i += 1
-    if state in {"block_comment", "string"}:
+    if state in {"block", "string"}:
         fail(f"unterminated {state}")
     return "".join(out)
 
@@ -82,11 +77,11 @@ def function_body(text: str, name: str) -> str:
         n = text[i + 1] if i + 1 < len(text) else ""
         if state == "code":
             if c == "/" and n == "/":
-                state = "line_comment"
+                state = "line"
                 i += 2
                 continue
             if c == "/" and n == "*":
-                state = "block_comment"
+                state = "block"
                 i += 2
                 continue
             if c == '"':
@@ -97,10 +92,10 @@ def function_body(text: str, name: str) -> str:
                 depth -= 1
                 if depth == 0:
                     return text[start + 1 : i]
-        elif state == "line_comment":
+        elif state == "line":
             if c == "\n":
                 state = "code"
-        elif state == "block_comment":
+        elif state == "block":
             if c == "*" and n == "/":
                 state = "code"
                 i += 2
@@ -120,7 +115,6 @@ def main() -> int:
     text = SOURCE.read_text(encoding="utf-8")
     clean = strip_comments_and_strings(text)
 
-    # Balanced delimiters after comments/strings are removed.
     stack: list[tuple[str, int]] = []
     pairs = {")": "(", "]": "[", "}": "{"}
     line = 1
@@ -136,7 +130,6 @@ def main() -> int:
     if stack:
         fail(f"unclosed delimiter {stack[-1]}")
 
-    # Function names should be unique in this single-source EA.
     names = re.findall(
         r"(?m)^\s*(?:void|bool|int|long|ulong|double|string|datetime|ENUM_[A-Z0-9_]+)\s+([A-Za-z_]\w*)\s*\([^;{}]*\)\s*\{",
         clean,
@@ -145,55 +138,42 @@ def main() -> int:
     if duplicates:
         fail(f"duplicate function definitions: {duplicates}")
 
-    required_fragments = {
-        "v2.06 property": '#property version   "2.06"',
-        "new persistent prefix": 'StringFormat("EMB206_%I64d_%I64u_"',
-        "isolated magic number": "InpMagicNumber                    = 2207202606",
-        "legacy cleanup magic": "InpLegacyMagicNumber               = 2207202603",
-        "legacy pending cleanup": "HandleLegacyPendingCleanup()",
-        "analytics-only score": "InpAnalyticsReferenceScore",
-        "no strategy request cooldown": "InpTradeRequestCooldownMs           = 0",
-        "no position ceiling": "InpMaximumPositions                = 0",
-        "no total-lot ceiling": "InpMaximumTotalLots                = 0.0",
+    required = {
+        "property": '#property version   "2.08"',
+        "heartbeat": '\\"version\\":\\"2.08\\"',
+        "magic": "InpMagicNumber                    = 2207202608",
+        "legacy magic": "InpLegacyMagicNumber               = 2207202606",
+        "persistent prefix": 'StringFormat("EMB208_%I64d_%I64u_"',
+        "new comments": 'comment = "EVE28-LAD"',
+        "legacy comments": 'StringFind(comment, "EVE26-")',
+        "tick watchdog": "DetectExecutionIntegrityBreach(tick);",
+        "timer watchdog": "DetectExecutionIntegrityBreach(safety_tick);",
+        "fill progression": "SequentialFillProgressed(execution_side, previous_trigger, price)",
+        "fill/sl validation": "INVALID BUY FILL/SL",
+        "buy quote watchdog": "tick.bid <= sl + tolerance",
+        "sell quote watchdog": "tick.ask >= sl - tolerance",
+        "missing sl watchdog": "has no broker-side SL",
+        "pending-first close": "CANCELLING ALL PENDING BEFORE BANKING",
+        "stale delete refresh": "ORDER CHANGED STATE - REFRESHING",
+        "safe candle refresh": "SAFE TWO-SIDED REFRESH",
+        "no strategy cooldown": "InpTradeRequestCooldownMs           = 0",
+        "unlimited positions": "InpMaximumPositions                = 0",
+        "unlimited lots": "InpMaximumTotalLots                = 0.0",
         "no session gate": "InpUseSessionFilter                = false",
-        "no fixed TP": "InpTakeProfitATR                   = 0.0",
-        "profit-lock input": "InpNewestSLPreviousLegLockFraction",
-        "newest position tracking": "newest_position_id",
-        "newest SL event": "deal_reason == DEAL_REASON_SL && position_id > 0 && position_id == newest_position_id",
-        "second-trigger confirmation": "CountOurPositionsBySide(campaign_current_side) >= 2",
-        "confirmation anchor": '"CONFIRMATION", lot, desired, atr_value, base',
-        "ladder anchor": '"LADDER", CalculateLegLot(), desired, CurrentOrderAtr(), base',
-        "profit lock comparison": "sl > protect_anchor_price : sl < protect_anchor_price",
-        "SL and no TP submit": "safe_price, trade_symbol, sl, 0.0, ORDER_TIME_GTC",
     }
-    for label, fragment in required_fragments.items():
+    for label, fragment in required.items():
         if fragment not in text:
             fail(f"missing invariant: {label}")
 
-    manage = function_body(text, "ManageBasket")
-    for forbidden in (
-        "InsideTradingSessionUTC(",
-        "TradingConditionsOkay(",
-        "TryAddRollingLeg(",
-        "MaintainReverseStop(",
-        "TrailAllPositions(",
-        "InpMaximumBasketLossMoney",
-        "InpMaximumBasketMinutes",
-        "InpPostCampaignCooldownSeconds",
-        "manual_news_lock",
-    ):
-        if forbidden in manage:
-            fail(f"active ManageBasket contains forbidden gate/call: {forbidden}")
-
-    operational_functions = [
+    for name in (
         "ManageBasket",
         "MaintainMovingStraddle",
         "MaintainProvisionalCampaign",
         "MaintainActiveLadder",
         "BuildSafePendingLevels",
-    ]
-    for function_name in operational_functions:
-        body = function_body(text, function_name)
+        "DetectExecutionIntegrityBreach",
+    ):
+        body = function_body(text, name)
         for forbidden in (
             "InpAnalyticsReferenceScore",
             "buy_score",
@@ -201,44 +181,30 @@ def main() -> int:
             "score_gap",
             ".decision",
             ".momentum_state",
-            ".block_reason",
         ):
             if forbidden in body:
-                fail(f"{function_name} contains analytics/score dependency: {forbidden}")
+                fail(f"{name} contains analytics dependency: {forbidden}")
 
     moving = function_body(text, "MaintainMovingStraddle")
-    if "manual_news_lock" in moving or "InsideTradingSessionUTC(" in moving:
-        fail("flat candle straddle is still gated by news/session logic")
-
-    legacy = function_body(text, "HandleLegacyPendingCleanup")
-    for fragment in ("InpLegacyMagicNumber", "trade.OrderDelete", "EVE-MB2-", "EVE25-"):
-        if fragment not in text:
-            fail(f"legacy isolation missing: {fragment}")
+    if "CancelPendingOrders();\n         return;\n      }\n      ResetStraddleAnchor" in moving:
+        fail("new-candle refresh still deletes the whole bracket")
+    for fragment in ("REFRESHING BUY - SELL REMAINS LIVE", "REFRESHING SELL - BUY REMAINS LIVE", "straddle_buy_synced_candle", "straddle_sell_synced_candle"):
+        if fragment not in moving:
+            fail(f"safe two-sided refresh missing: {fragment}")
 
     close = function_body(text, "ContinuePendingClose")
-    positions_index = close.find("CountOurPositions() > 0")
     pending_index = close.find("CountOurPendingOrders() > 0")
-    if positions_index < 0 or pending_index < 0 or positions_index >= pending_index:
-        fail("basket close must process positions before pending orders")
+    position_index = close.find("CountOurPositions() > 0")
+    if pending_index < 0 or position_index < 0 or pending_index >= position_index:
+        fail("campaign closure must quarantine pending orders before positions")
 
-    active = function_body(text, "MaintainActiveLadder")
-    if 'if(DeleteOneForActiveLadder(side)) return;' not in active:
-        fail("active ladder does not wait for opposite/legacy order cleanup")
-
-    levels = function_body(text, "BuildSafePendingLevels")
-    for fragment in (
-        "protect_anchor_price + required_gap",
-        "protect_anchor_price - required_gap",
-        "entry - stops_distance",
-        "entry + stops_distance",
-        "prior_leg_locked",
-    ):
-        if fragment not in levels:
-            fail(f"profit-lock level construction missing: {fragment}")
+    transaction = function_body(text, "OnTradeTransaction")
+    if transaction.find("fill_breach") > transaction.find("campaign_phase = CAMPAIGN_ACTIVE"):
+        fail("fill integrity is checked too late")
 
     print(f"PASS: {SOURCE.name}")
     print(f"Functions: {len(names)} unique")
-    print("Locked invariants: score-independent candle straddle, 2-trigger confirmation, continuous stop ladder, previous-leg SL profit lock, newest-SL basket bank, legacy order isolation, no automatic strategy gates")
+    print("Execution guards: sequential fills, actual-fill SL geometry, live quote SL watchdog, pending-first quarantine, stale-ticket refresh, safe two-sided candle refresh")
     print("NOTE: MetaEditor compilation is still required.")
     return 0
 

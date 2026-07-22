@@ -30,7 +30,7 @@ function operationalReason(ea, control) {
   if (ea.connectionStatus !== 'CONNECTED') return 'MARKET CLOSED OR NO FRESH MT5 HEARTBEAT — old scan values are ignored.';
   if (!control.autonomous || !ea.autonomous) return 'AUTONOMOUS OFF — no new price-trigger orders will be placed.';
   if (ea.emergency) return 'EMERGENCY STOP ACTIVE.';
-  if (String(ea.engineState || '').includes('LEGACY') || String(ea.lastEvent || '').includes('previous EVE')) return ea.lastEvent || 'Removing old EVE orders before v2.06 starts.';
+  if (String(ea.engineState || '').includes('LEGACY') || String(ea.lastEvent || '').includes('previous EVE')) return ea.lastEvent || 'Removing v2.06/v2.07 EVE orders before v2.08 starts.';
   if (ea.closePending) return ea.closeReason || 'Newest-leg SL triggered — banking the full basket.';
   if (Number(ea.positionCount || 0) > 0) {
     if (String(ea.campaignPhase || '').includes('OCO') || String(ea.engineState || '').includes('PROVISIONAL')) return 'FIRST TRIGGER PROVISIONAL — the opposite stop remains until the second same-side trigger.';

@@ -1,113 +1,54 @@
-# Strategy specification — v2.06
+# Strategy specification — v2.08
 
-## 1. Fresh straddle on every candle
+## Flat state
 
-While flat, the EA anchors one BUY STOP above the current M1 candle and one SELL STOP below it. The pair remains fixed for that candle. If a new M1 candle begins without a trigger, the old pair is removed and replaced with a fresh pair.
+The EA maintains one current-candle BUY STOP and one current-candle SELL STOP. At a new M1 candle, it refreshes each side individually while the other side remains live.
 
-Orders are adjusted only as required for the symbol tick size and the broker's stop/freeze distance.
+## First trigger: provisional 1/2
 
-## 2. First trigger is provisional
+If BUY triggers first:
 
-Example: the BUY STOP triggers first.
+- BUY 1 opens with a broker-side SL;
+- the SELL STOP remains active;
+- BUY STOP 2 is placed higher.
 
-- BUY position 1 opens with its own broker-side SL.
-- The original SELL STOP remains active.
-- The EA places BUY STOP 2 above BUY position 1.
-- The campaign state is `PROVISIONAL 1/2`.
+SELL is the exact reverse.
 
-The first trigger does not cancel the opposite side.
+If the opposite stop triggers before the second same-side stop, the first breakout failed. The failed side is closed and the newly triggered side becomes provisional.
 
-## 3. Second same-direction trigger confirms momentum
+## Second trigger: direction confirmation
 
-If BUY STOP 2 triggers before the SELL STOP:
+A second BUY confirms only when the actual fill is higher than BUY 1. A second SELL confirms only when the actual fill is lower than SELL 1.
 
-- BUY position 2 opens with its own SL.
-- The BUY direction is confirmed.
-- The remaining SELL STOP is cancelled.
-- No further ladder orders are added until any opposite/legacy pending order has been removed or has otherwise resolved.
-- The EA then builds the same-direction pending-stop ladder.
+A spread spike, gap or delayed fill that produces the wrong fill order is not momentum confirmation. It triggers full campaign quarantine and closure.
 
-The SELL sequence is identical in reverse.
+## Active ladder
 
-## 4. False-breakout flip before confirmation
+After confirmation:
 
-If the SELL STOP triggers before BUY STOP 2:
+- the opposite pending stop is removed;
+- same-direction pending stops are staged ahead;
+- each fill adds another equal-lot position;
+- the pending ladder is replenished continuously;
+- no fixed TP is used.
 
-- The first BUY is treated as a failed breakout.
-- The new SELL is retained as SELL position 1.
-- The failed BUY is closed.
-- The existing BUY STOP becomes the opposite provisional guard.
-- The EA places SELL STOP 2 below price.
-- SELL must obtain its own second same-direction trigger before confirmation.
+## Stop-loss geometry
 
-This can repeat without a cooldown.
+Every pending order carries its own broker-side SL.
 
-## 5. Continuous confirmed ladder
+For confirmation/ladder BUY orders, the newest SL is between the previous BUY trigger and the newest BUY trigger. For SELL orders it is between the previous SELL trigger and newest SELL trigger.
 
-After confirmation, v2.06 stages `InpLadderOrdersAhead` same-direction pending stops. The default is 12 orders ahead.
+## Full-basket exit
 
-As price triggers one order:
+A normal newest-leg broker SL event starts full-basket banking.
 
-- a new position opens from that pending stop;
-- the position has a real broker-side SL and no TP;
-- it becomes the newest controlling leg;
-- the EA replenishes another pending stop beyond the furthest remaining order.
+The EA also has a quote-side watchdog:
 
-The queue depth is finite, but it is replenished continuously; the campaign has no programmed position-count or total-lot ceiling.
+- BUY positions are checked against Bid;
+- SELL positions are checked against Ask.
 
-There is no market-order adding, P/L gate, momentum-score gate or add cooldown.
+If the quote has crossed a displayed SL but the position remains open, the EA treats this as an execution-integrity breach. It first cancels all remaining pending orders, then closes every open campaign position.
 
-## 6. Profit-lock spacing and individual SLs
+## No strategy restrictions
 
-Every initial, confirmation and ladder position has its own SL.
-
-For confirmation and ladder orders, the next trigger is widened when necessary so that its SL can sit beyond the previous trigger price while still respecting broker minimum-distance rules. With the default 65% lock fraction:
-
-- BUY ladder: new BUY entry > new BUY SL > previous BUY trigger;
-- SELL ladder: new SELL entry < new SELL SL < previous SELL trigger.
-
-Therefore, when the newest SL is reached, the immediately previous position is already on the profitable side by price, and all still-older same-direction entries are farther into profit. Trading costs, slippage and gaps can affect net realised money.
-
-Initial straddle orders and provisional opposite guards use the normal ATR/broker-distance SL because they do not yet have a same-direction predecessor to lock.
-
-## 7. Newest-leg SL banks the basket
-
-The newest active same-direction position is the controlling leg.
-
-When its closing deal is reported as a broker-side stop-loss exit:
-
-1. the EA marks the full basket for closure;
-2. it closes every older open position first;
-3. it then deletes all untriggered ladder orders;
-4. it records the completed campaign;
-5. it immediately rebuilds the current-candle two-sided straddle.
-
-An older position closing independently does not trigger the basket close. The controlling event is the SL of the newest tracked position.
-
-## 8. No automatic strategy restrictions
-
-v2.06 does not stop or delay entries because of:
-
-- time of day;
-- momentum score;
-- spread analysis;
-- basket profit or loss;
-- number of positions;
-- total lots;
-- daily result;
-- consecutive losses;
-- campaign age;
-- post-campaign cooldown;
-- dashboard news-lock state.
-
-It operates whenever ticks are arriving and the terminal/broker permits trading. Direct user controls—Pause, Autonomous Off, Close Basket and Emergency Stop—remain available.
-
-## 9. Restart recovery
-
-After an EA or terminal restart:
-
-- a one-leg same-direction basket is recovered as provisional;
-- a basket with at least two positions in the retained direction is recovered as confirmed;
-- the newest live position identifier and SL are rediscovered;
-- stale flat pending orders are cleared and replaced with a current-candle straddle;
-- v2.06 uses a new persistent-state prefix so it does not inherit v2.04 campaign globals.
+The operational state machine does not reference BUY/SELL analytics scores. It has no session filter, news gate, campaign timer, post-campaign cooldown, maximum position count or maximum total-lot gate.

@@ -1,38 +1,18 @@
-EVE MOMENTUM BURST v2.06 — FULL REPLACEMENT
+EVE MOMENTUM BURST v2.08 — COMPLETE REPLACEMENT
 
-THIS IS NOT A PATCH.
-Replace the complete GitHub repository with everything inside this folder.
+1. Keep Algo Trading OFF.
+2. Close all v2.06/v2.07 open positions.
+3. Delete all remaining v2.06/v2.07 pending orders.
+4. Replace the entire GitHub repository with this ZIP.
+5. Wait for Railway to redeploy v2.0.8.
+6. Copy mt5/EVE_Momentum_Burst_EA_v2.08.mq5 into MQL5/Experts.
+7. Compile in MetaEditor and require 0 errors.
+8. Remove v2.06/v2.07 from the chart.
+9. Attach v2.08 to XAUUSD M1.
+10. Enter the Railway URL and bot token.
+11. Turn Algo Trading ON.
+12. Confirm both pending stops and an updating v2.08 heartbeat.
 
-DEPLOYMENT
-1. Extract the ZIP.
-2. Open the extracted folder.
-3. Upload all contents to the existing GitHub repository, replacing v2.04.
-4. Railway root directory remains: railway
-5. Railway start command remains: npm start
-6. Keep the current Railway environment variables.
-7. Wait for Railway to show v2.0.6 online.
-8. Open mt5/EVE_Momentum_Burst_EA_v2.06.mq5 in MetaEditor.
-9. Compile and require 0 errors.
-10. Remove v2.04/v2.05 from the chart. v2.06 will remove recognised old EVE pending orders automatically.
-11. Attach v2.06 to XAUUSD M1 on the demo hedging account.
+WHY THIS VERSION EXISTS
 
-EXPECTED LOGIC
-- fresh BUY STOP + SELL STOP every candle while flat;
-- first trigger is provisional;
-- opposite stop remains until second same-side trigger;
-- second trigger confirms direction;
-- continuous same-side pending-stop ladder;
-- every leg has its own SL and no TP;
-- each confirmation/ladder SL is beyond the previous trigger price;
-- newest leg SL closes and banks the older basket;
-- immediate restart with no strategy cooldown;
-- no automatic session, score, spread, P/L, position-count, total-lot, daily-result or duration gate.
-
-IMPORTANT
-The source and Node components have passed local structural/tests, but MetaEditor compilation cannot be performed in this environment. Do not deploy to live money until MetaEditor shows 0 errors and the demo scenarios in docs/TESTING.md have passed.
-
-
-IMPORTANT MIGRATION CHECK
-- v2.06 has a new magic number and will delete recognised old v2.04/v2.05 pending EVE orders.
-- It will not overlap an old open EVE position. Close any old EVE position manually before expecting the new bracket.
-- The dashboard BUY/SELL scores are labelled ANALYTICS ONLY and cannot stop the price-trigger engine.
+v2.08 rejects wrong-sequence fills caused by spread/gaps, detects positions left open beyond their displayed SL, cancels pending orders before basket closure, stops stale-ticket delete spam, and keeps the two-sided bracket live during candle refresh.

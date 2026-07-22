@@ -1,62 +1,63 @@
-# EVE MOMENTUM BURST v2.06
+# EVE MOMENTUM BURST v2.08
 
-This is the complete GitHub-ready replacement for v2.04.
+This is the complete GitHub-ready replacement for v2.06/v2.07.
 
-v2.06 runs the exact candle-triggered ladder requested:
+## Exact strategy
 
-1. While flat, every new M1 candle receives one BUY STOP and one SELL STOP.
+1. While flat, the EA keeps one BUY STOP above price and one SELL STOP below price for the current M1 candle.
 2. The first triggered order starts a provisional direction.
-3. The opposite stop remains active while the bot places the second same-direction stop.
-4. The second same-direction trigger confirms the direction.
-5. Only after that second trigger does the EA cancel the opposite stop.
-6. The EA then stages 12 same-direction stop orders ahead of price and continuously replenishes them. The campaign itself has no position-count, total-lot, score, session, duration or strategy-cooldown gate.
-7. Every triggered position has its own broker-side stop loss and no fixed take profit.
-8. Confirmation and ladder orders are automatically spaced far enough for the newest order's SL to sit beyond the previous trigger price. For a BUY ladder, the newest SL is above the prior BUY trigger; for a SELL ladder, it is below the prior SELL trigger.
-9. When the newest triggered position closes by broker-side SL, the EA immediately closes all older campaign positions, then removes every remaining pending order.
-10. It immediately returns to the current-candle straddle with no post-campaign cooldown.
-11. If the opposite stop triggers before the second same-side confirmation, the first direction is treated as a false breakout: the failed position is closed and the newly triggered side becomes provisional.
+3. The opposite stop remains active while the EA places the second same-direction stop.
+4. The second same-direction trigger confirms direction only when its actual broker fill progressed correctly:
+   - a later BUY must fill higher than the previous BUY;
+   - a later SELL must fill lower than the previous SELL.
+5. After confirmation, the opposite stop is cancelled and the same-direction stop ladder is replenished continuously.
+6. Every position has its own broker-side SL and no fixed TP.
+7. The newest leg's SL is placed beyond the previous trigger so a normal reversal banks the older positions.
+8. When the newest SL is hit, all pending orders are quarantined/cancelled and the remaining basket is closed.
+9. The EA immediately returns to the current-candle straddle. There is no strategy cooldown.
+
+## v2.08 execution-safety correction
+
+v2.08 fixes the exact failure seen during the wide-spread execution:
+
+- A BUY fill below/equal to the previous BUY can never confirm a BUY ladder.
+- A SELL fill above/equal to the previous SELL can never confirm a SELL ladder.
+- A fill whose inherited SL is already on the wrong side of the actual fill is rejected as an execution-integrity breach.
+- Every tick checks whether Bid has crossed a BUY SL or Ask has crossed a SELL SL while the position is still open.
+- A missing broker-side SL is treated as an integrity breach after a one-second attachment grace period.
+- Any integrity breach cancels all remaining pending orders and closes the complete campaign.
+- During basket closure, pending orders are cancelled before open positions are banked, preventing another planned ladder leg from joining the exit.
+- If an order changes from pending to filled while cancellation is being requested, the EA refreshes state instead of repeatedly submitting an invalid delete request.
+- On a new candle, the existing two-sided bracket stays live while each side is refreshed individually. The EA no longer deletes both sides first and leaves a prolonged one-sided bracket.
+
+These are execution-integrity protections, not momentum filters, trading sessions, position limits or cooldowns.
 
 ## 24/5 operation
 
-There is no automatic session filter, momentum-score gate, spread gate, daily lock, consecutive-loss lock, campaign timer, position ceiling, total-lot ceiling or strategy cooldown. The EA keeps operating whenever MT5 is connected, Algo Trading is permitted and the broker is accepting orders.
+There is no automatic momentum-score gate, session filter, campaign-duration gate, daily-loss lock, consecutive-loss lock, position ceiling, total-lot ceiling or strategy cooldown. The EA operates whenever MT5 is connected, Algo Trading is enabled and the broker accepts orders.
 
-Manual **Pause**, **Close Basket**, **Emergency Stop** and dashboard Autonomous On/Off controls remain available. They are direct user controls, not automatic strategy restrictions. Pause and emergency state persist across midnight until deliberately changed.
+Manual **Pause**, **Close Basket**, **Emergency Stop** and dashboard Autonomous controls remain available.
 
-A short retry after a rejected, frozen or invalid broker request remains necessary for orderly trade-server communication; it is not an entry cooldown.
+## Migration safety
 
-## Profit-lock geometry
+- v2.08 magic number: `2207202608`
+- v2.08 order comments: `EVE28-INIT`, `EVE28-CONF`, `EVE28-LAD`
+- previous v2.06/v2.07 magic: `2207202606`
 
-The default `InpNewestSLPreviousLegLockFraction = 0.65` places a confirmation/ladder leg's SL 65% of the way from the previous trigger toward its own trigger, while also respecting the broker's minimum stop distance. This means the previous same-direction position is beyond break-even by price when the newest SL is reached. Spread, commission, swaps, gaps and slippage can still affect the final net result.
-
-## Important account requirement
-
-Use an MT5 hedging account. During a provisional false-breakout transition, BUY and SELL positions can exist briefly while the failed side is being closed.
+v2.08 removes recognised v2.06/v2.07 pending EVE orders before starting. It refuses to overlap an open v2.06/v2.07 position. Close old positions first, then attach v2.08.
 
 ## Repository structure
 
-- `mt5/EVE_Momentum_Burst_EA_v2.06.mq5` — complete EA source
-- `railway/` — dashboard, controls, persistence, CSV exports and analysis
-- `supabase/schema.sql` — optional permanent evidence database
-- `tools/validate_source.py` — local structural/source validation
+- `mt5/EVE_Momentum_Burst_EA_v2.08.mq5` — complete EA source
+- `railway/` — dashboard, controls, evidence and exports
+- `supabase/schema.sql` — optional permanent database
+- `tools/validate_source.py` — static source/package validator
+- `tools/test_execution_safety.py` — deterministic safety scenarios
 - `docs/INSTALL-EASY.md` — deployment steps
-- `docs/STRATEGY.md` — exact state machine
-- `docs/TESTING.md` — demo validation sequence
-- `docs/VALIDATION.md` — checks completed in this package
+- `docs/STRATEGY.md` — state machine
+- `docs/TESTING.md` — demo testing procedure
+- `docs/VALIDATION.md` — completed checks
 
-## Identity
+## Required final check
 
-- Magic number: `2207202606`
-- Trade comment: `EVE-MOMENTUM-V2.06`
-- Railway root directory: `railway`
-- Intended chart: `XAUUSD M1`
-- Railway domain: `https://eve-momentum-burst-production.up.railway.app`
-
-MetaEditor is the definitive MQL5 compilation check. Compile with zero errors and test on the IC Markets demo account before any live deployment.
-
-
-## v2.06 score isolation and legacy cleanup
-
-- BUY/SELL scores, velocity, EMA alignment and momentum labels are telemetry only. They are not referenced by the straddle, provisional confirmation, ladder replenishment or newest-SL basket close functions.
-- v2.06 uses a new magic number (`2207202606`) and `EVE26-*` order comments, so v2.04/v2.05 positions and pending orders cannot be adopted as part of a v2.06 campaign.
-- Before starting its own bracket, v2.06 repeatedly removes recognised v2.04/v2.05 EVE pending orders using the previous magic number.
-- If an old EVE position is still open, v2.06 displays a migration warning and does not overlap it. Close that old position manually, then v2.06 begins immediately.
+MetaEditor is the definitive MQL5 compiler. Compile `mt5/EVE_Momentum_Burst_EA_v2.08.mq5` with **0 errors** and test on the IC Markets demo account before live use.
