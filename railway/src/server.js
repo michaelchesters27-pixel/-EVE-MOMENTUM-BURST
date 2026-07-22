@@ -11,15 +11,19 @@ const DATA_DIR = String(process.env.DATA_DIR || path.join(__dirname, '..', 'data
 const SUPABASE_URL = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SUPABASE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 const EA_STALE_MS = 15_000;
-const MAX_SCANS = 10_000;
-const MAX_TRADES = 2_000;
-const MAX_EVENTS = 1_000;
+const MAX_SCANS = 20_000;
+const MAX_TRADES = 3_000;
+const MAX_EVENTS = 2_000;
 
 export const nowIso = () => new Date().toISOString();
 
 function safeNumber(value, fallback = 0) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function safeInteger(value, fallback = 0) {
+  return Math.trunc(safeNumber(value, fallback));
 }
 
 function clampArray(items, limit) {
@@ -52,13 +56,24 @@ const files = {
   events: path.join(DATA_DIR, 'events.jsonl')
 };
 
+function dedupeById(items) {
+  const seen = new Set();
+  return items.filter(item => {
+    const id = item?.id;
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
 const scans = loadJsonLines(files.scans, MAX_SCANS);
-const trades = loadJsonLines(files.trades, MAX_TRADES);
+const trades = dedupeById(loadJsonLines(files.trades, MAX_TRADES));
 const events = loadJsonLines(files.events, MAX_EVENTS);
 
 const state = {
-  version: '1.0.0',
+  version: '1.1.0',
   service: 'EVE MOMENTUM BURST',
+  mode: 'FLIPPER-MODE LIVE BURST',
   startedAt: nowIso(),
   control: {
     autonomous: String(process.env.AUTO_ENABLED || 'true').toLowerCase() !== 'false',
@@ -92,24 +107,41 @@ const state = {
     autonomous: false,
     emergency: false,
     positionOpen: false,
+    positionCount: 0,
+    pendingCount: 0,
     side: 'NONE',
-    ticket: null,
-    volume: 0,
-    entryPrice: null,
+    totalLots: 0,
+    averageEntry: null,
     currentPrice: null,
-    sl: null,
-    tp: null,
+    protectedStop: null,
     floatingProfit: 0,
-    mfe: 0,
-    mae: 0,
+    peakBasketProfit: 0,
+    basketMae: 0,
+    basketTargetMoney: 0,
+    basketTrailStartMoney: 0,
+    basketGivebackMoney: 0,
+    basketStartedAt: null,
+    positionsOpened: 0,
+    maxConcurrentPositions: 0,
     closePending: false,
     closeReason: null,
     closeAttempts: 0,
     lastCloseRetcode: 0,
     lastCloseResult: null,
     dailyPnl: 0,
-    tradesToday: 0,
+    basketsToday: 0,
     consecutiveLosses: 0,
+    momentumState: 'WARMING',
+    liveDirection: 'NONE',
+    buyScore: 0,
+    sellScore: 0,
+    velocity1s: 0,
+    velocity3s: 0,
+    velocity10s: 0,
+    tickRateRatio: 0,
+    acceleration: 0,
+    bodyAtr: 0,
+    extensionAtr: 0,
     lastEvent: 'Waiting for EA heartbeat',
     consumedCommandId: 0
   },
@@ -179,12 +211,14 @@ export function calculateStats(inputTrades) {
   const avgWinner = wins.length ? grossProfit / wins.length : 0;
   const avgLoser = losses.length ? losses.reduce((sum, value) => sum + value, 0) / losses.length : 0;
   const profitFactor = grossLossAbs > 0 ? grossProfit / grossLossAbs : grossProfit > 0 ? 999 : 0;
+  const totalLegs = completed.reduce((sum, item) => sum + safeInteger(item.positionsOpened, 1), 0);
+  const totalDuration = completed.reduce((sum, item) => sum + safeInteger(item.durationSeconds), 0);
 
   const bySide = ['BUY', 'SELL'].map(side => {
     const subset = completed.filter(item => item.side === side);
     const sideNet = subset.reduce((sum, item) => sum + safeNumber(item.netProfit), 0);
     const sideWins = subset.filter(item => safeNumber(item.netProfit) > 0).length;
-    return { side, trades: subset.length, wins: sideWins, winRate: subset.length ? sideWins / subset.length * 100 : 0, netProfit: sideNet };
+    return { side, baskets: subset.length, wins: sideWins, winRate: subset.length ? sideWins / subset.length * 100 : 0, netProfit: sideNet };
   });
 
   const scoreBands = [
@@ -196,11 +230,15 @@ export function calculateStats(inputTrades) {
     const subset = completed.filter(item => safeNumber(item.entryScore, -1) >= band.min && safeNumber(item.entryScore, -1) <= band.max);
     const bandNet = subset.reduce((sum, item) => sum + safeNumber(item.netProfit), 0);
     const bandWins = subset.filter(item => safeNumber(item.netProfit) > 0).length;
-    return { ...band, trades: subset.length, winRate: subset.length ? bandWins / subset.length * 100 : 0, netProfit: bandNet };
+    return { ...band, baskets: subset.length, winRate: subset.length ? bandWins / subset.length * 100 : 0, netProfit: bandNet };
   });
 
   return {
     trades: completed.length,
+    baskets: completed.length,
+    totalLegs,
+    averageLegs: completed.length ? totalLegs / completed.length : 0,
+    averageDurationSeconds: completed.length ? totalDuration / completed.length : 0,
     wins: wins.length,
     losses: losses.length,
     winRate: completed.length ? wins.length / completed.length * 100 : 0,
@@ -288,7 +326,7 @@ function serveStatic(request, response, pathname) {
   if (!map[pathname]) return false;
   const [filename, type] = map[pathname];
   const file = path.join(__dirname, '..', 'public', filename);
-  sendText(request, response, 200, fs.readFileSync(file), type, { 'Cache-Control': 'public, max-age=60' });
+  sendText(request, response, 200, fs.readFileSync(file), type, { 'Cache-Control': 'public, max-age=30' });
   return true;
 }
 
@@ -306,6 +344,7 @@ export function createHttpServer() {
           ok: true,
           service: state.service,
           version: state.version,
+          mode: state.mode,
           railway: 'ONLINE',
           eaOnline: state.ea.online,
           autonomous: state.control.autonomous,
@@ -326,7 +365,7 @@ export function createHttpServer() {
           ok: true,
           state,
           performance: calculateStats(trades),
-          recentScans: scans.slice(0, 100),
+          recentScans: scans.slice(0, 120),
           recentTrades: trades.slice(0, 100),
           recentEvents: events.slice(0, 100)
         });
@@ -346,9 +385,9 @@ export function createHttpServer() {
 
       if (request.method === 'POST' && pathname === '/api/ea/heartbeat') {
         state.ea = { ...state.ea, ...body, online: true, lastSeenAt: nowIso() };
-        state.ea.balance = safeNumber(state.ea.balance, null);
-        state.ea.equity = safeNumber(state.ea.equity, null);
-        state.ea.floatingProfit = safeNumber(state.ea.floatingProfit);
+        for (const key of ['balance', 'equity', 'floatingProfit', 'peakBasketProfit', 'basketMae', 'totalLots', 'dailyPnl']) {
+          state.ea[key] = safeNumber(state.ea[key], key === 'balance' || key === 'equity' ? null : 0);
+        }
         const consumed = safeNumber(state.ea.consumedCommandId);
         if (commandPending() && consumed >= state.command.id) {
           state.command.consumedAt = nowIso();
@@ -370,13 +409,15 @@ export function createHttpServer() {
 
       if (request.method === 'POST' && pathname === '/api/ea/trade') {
         const record = { id: body.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`, receivedAt: nowIso(), ...body };
+        const existingIndex = trades.findIndex(item => item.id === record.id);
+        if (existingIndex >= 0) trades.splice(existingIndex, 1);
         trades.unshift(record);
         clampArray(trades, MAX_TRADES);
         state.lastTrade = record;
         appendJsonLine(files.trades, record);
         void supabaseInsert('eve_momentum_trades', record);
-        addEvent('trade', `${record.side || 'TRADE'} closed ${safeNumber(record.netProfit).toFixed(2)}`, {
-          ticket: record.ticket,
+        addEvent('trade', `${record.side || 'BASKET'} basket closed ${safeNumber(record.netProfit).toFixed(2)}`, {
+          positionsOpened: record.positionsOpened,
           exitReason: record.exitReason,
           netProfit: record.netProfit
         });
@@ -420,17 +461,16 @@ export function createHttpServer() {
           state.control.emergency = false;
           return sendJson(request, response, 200, { ok: true, command: queueCommand(action) });
         }
-        if (!new Set(['CLOSE_POSITION', 'PAUSE_EA', 'RESUME_EA']).has(action)) {
-          return sendJson(request, response, 400, { ok: false, error: 'Unsupported command' });
-        }
+        const supported = new Set(['CLOSE_BASKET', 'CLOSE_POSITION', 'PAUSE_EA', 'RESUME_EA', 'PAUSE_ADDING', 'RESUME_ADDING']);
+        if (!supported.has(action)) return sendJson(request, response, 400, { ok: false, error: 'Unsupported command' });
         return sendJson(request, response, 200, { ok: true, command: queueCommand(action) });
       }
 
       if (request.method === 'GET' && pathname === '/api/export/scans.csv') {
-        return sendText(request, response, 200, csvData(scans.slice().reverse()), 'text/csv; charset=utf-8', { 'Content-Disposition': 'attachment; filename="eve-momentum-scans.csv"' });
+        return sendText(request, response, 200, csvData(scans.slice().reverse()), 'text/csv; charset=utf-8', { 'Content-Disposition': 'attachment; filename="eve-momentum-live-scans.csv"' });
       }
       if (request.method === 'GET' && pathname === '/api/export/trades.csv') {
-        return sendText(request, response, 200, csvData(trades.slice().reverse()), 'text/csv; charset=utf-8', { 'Content-Disposition': 'attachment; filename="eve-momentum-trades.csv"' });
+        return sendText(request, response, 200, csvData(trades.slice().reverse()), 'text/csv; charset=utf-8', { 'Content-Disposition': 'attachment; filename="eve-momentum-baskets.csv"' });
       }
       if (request.method === 'GET' && pathname === '/api/export/events.csv') {
         return sendText(request, response, 200, csvData(events.slice().reverse()), 'text/csv; charset=utf-8', { 'Content-Disposition': 'attachment; filename="eve-momentum-events.csv"' });
@@ -447,7 +487,7 @@ export function createHttpServer() {
 if (process.env.NODE_ENV !== 'test') {
   const server = createHttpServer();
   server.listen(PORT, () => {
-    console.log(`${state.service} v${state.version} listening on port ${PORT}`);
-    addEvent('system', `Railway service started v${state.version}`);
+    console.log(`${state.service} v${state.version} ${state.mode} listening on port ${PORT}`);
+    addEvent('system', `Railway service started v${state.version} - ${state.mode}`);
   });
 }

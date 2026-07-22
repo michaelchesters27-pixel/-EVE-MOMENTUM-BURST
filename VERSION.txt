@@ -1,2 +1,3 @@
-EVE MOMENTUM BURST v1.00
-Research reconstruction of visible Fury/Markflipper-style XAUUSD momentum behaviour.
+EVE MOMENTUM BURST v1.10
+Mode: FLIPPER-MODE LIVE BURST
+Release: controlled multi-position behavioural reconstruction

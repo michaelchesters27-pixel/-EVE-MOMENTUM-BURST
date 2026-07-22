@@ -1,12 +1,12 @@
 {
   "name": "eve-momentum-burst-railway",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "engines": { "node": ">=20" },
   "scripts": {
     "start": "node src/server.js",
     "check": "node --check src/server.js && node --check public/app.js",
-    "test": "node --test src/*.test.js"
+    "test": "NODE_ENV=test node --test src/*.test.js"
   }
 }

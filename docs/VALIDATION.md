@@ -2,19 +2,15 @@
 
 Completed in the build environment:
 
-- Node syntax check: passed.
-- Dashboard JavaScript syntax check: passed.
-- Node test suite: 3/3 passed.
-- Railway server startup: passed.
-- `/health` response: passed.
-- Authenticated heartbeat endpoint: passed.
-- Authenticated scan endpoint: passed.
-- Dashboard command queue/control endpoint: passed.
-- Authenticated state endpoint: passed.
-- Dashboard static page delivery: passed.
-- MQL5 source delimiter/static structure check: passed.
-- MQL5 required safety/event functions present: passed.
-- All 19 `StringFormat` calls checked for matching placeholder/argument counts: passed.
-- ZIP integrity: checked during release packaging.
+- Railway server JavaScript syntax check
+- dashboard JavaScript syntax check
+- clean package-lock generation
+- npm audit: zero dependencies and zero vulnerabilities
+- four Node tests passed
+- repository path and required-file checks
+- MQL source structural checks for balanced braces, duplicate function names and required safety features
+- ZIP integrity test
 
-MetaEditor is not installed in the build environment. The MQ5 source must therefore be compiled once in MetaEditor before use. A successful MetaEditor result of **0 errors** is the final compile proof.
+The MQL source must still be compiled in MetaEditor because MetaEditor is not available in this environment. A successful release requires the user to confirm `0 errors` after pressing F7.
+
+This release is a behavioural reconstruction based on screenshots and trade evidence. It is not validated as the original proprietary algorithm and has no profitability guarantee.
