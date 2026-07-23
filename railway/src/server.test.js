@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculatePerformance, csvEscape, createHttpServer, validateSettings, DEFAULT_SETTINGS } from './server.js';
+import { calculatePerformance, csvEscape, createHttpServer, filterRecordsByMagic, validateSettings, DEFAULT_SETTINGS } from './server.js';
 
 test('performance includes detailed basket metrics', () => {
   const result = calculatePerformance([
@@ -31,4 +31,13 @@ test('csv escaping works', () => {
 
 test('server constructs', () => {
   const server = createHttpServer(); assert.equal(typeof server.listen, 'function'); server.close();
+});
+
+test('current EA magic excludes older bot records', () => {
+  const records = [
+    { id: 'old', magic: '2207202611', netProfit: 99 },
+    { id: 'current', magic: '2207202630', netProfit: 1.25 },
+    { id: 'missing', netProfit: 5 }
+  ];
+  assert.deepEqual(filterRecordsByMagic(records).map(item => item.id), ['current']);
 });

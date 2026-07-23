@@ -1,15 +1,17 @@
-EVE MOMENTUM BURST v2.11 — COMPLETE REPLACEMENT
+EVE MOMENTUM BURST v3.00 — COMPLETE REPLACEMENT
 
 1. Keep Algo Trading OFF.
-2. Close old EVE positions and delete old pending orders.
+2. Close all old EVE positions and delete all old EVE pending orders.
 3. Replace the full GitHub repository with this package.
-4. Wait for Railway v2.0.11 to deploy.
+4. Wait for Railway v3.0.0 to deploy.
 5. Copy the EA source into MQL5/Experts.
-6. Compile mt5/EVE_Momentum_Burst_EA_v2.11.mq5 with 0 errors.
+6. Compile mt5/EVE_Momentum_Burst_EA_v3.00.mq5 with 0 errors.
 7. Remove the older EA.
-8. Attach v2.11 to XAUUSD M1.
+8. Attach v3.00 to XAUUSD M1.
 9. Enter the Railway URL and bot token.
 10. Turn Algo Trading ON.
-11. Wait 30 seconds for live tick warmup.
-12. Expect no pending orders while quiet.
-13. Expect one BUY STOP and one SELL STOP only after a genuine acceleration burst.
+11. Wait at least 30 seconds for live-tick warmup.
+12. Quiet market = no pending order.
+13. BUY burst = one BUY STOP only; SELL burst = one SELL STOP only.
+14. Position 2 is allowed only after the scout is protected and live price re-accelerates.
+15. Dashboard performance must say MAGIC 2207202630 ONLY.

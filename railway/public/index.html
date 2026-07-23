@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EVE Momentum Burst v2.11</title>
+  <title>EVE Momentum Burst v3.00</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
     <div>
       <p class="eyebrow">XAUUSD • TICK-BY-TICK EXECUTION • M1 VOLATILITY • M5 SOFT BIAS</p>
       <h1>EVE MOMENTUM BURST</h1>
-      <p class="subtitle">The EA waits for genuine live acceleration before arming a temporary BUY STOP and SELL STOP. M1 ATR measures whether the move matters; M5 is a soft bias. Position 1 protects profit, confirmed positions share one broker-side SL, and only one future ladder stop is allowed ahead.</p>
+      <p class="subtitle">The EA waits for genuine live acceleration, then arms one directional scout stop only. The scout banks on protected profit or momentum stall. Position 2 is allowed only after the scout proves itself and live price re-accelerates; confirmed positions then share one broker-side SL.</p>
     </div>
     <span id="systemBadge" class="badge neutral">CONNECTING</span>
   </header>
@@ -37,10 +37,10 @@
     </div>
     <div id="blockReason" class="notice">Waiting for EA data.</div>
     <div class="score-grid eight">
-      <article><span>Campaign direction</span><strong id="watchDirection">—</strong></article>
+      <article><span>Scout / basket direction</span><strong id="watchDirection">—</strong></article>
       <article><span>BUY analytics only</span><strong id="buyScore">0/11</strong></article>
       <article><span>SELL analytics only</span><strong id="sellScore">0/11</strong></article>
-      <article><span>Bracket state</span><strong id="bracketState">—</strong></article>
+      <article><span>Scout order state</span><strong id="bracketState">—</strong></article>
       <article><span>BUY STOP</span><strong id="buyStop">—</strong></article>
       <article><span>SELL STOP</span><strong id="sellStop">—</strong></article>
       <article><span>1s / 3s velocity</span><strong id="velocities">—</strong></article>
@@ -68,7 +68,7 @@
 
   <section class="two-col">
     <article class="panel">
-      <p class="eyebrow">ACTIVE MOMENTUM BASKET</p>
+      <p class="eyebrow">ACTIVE SCOUT / MOMENTUM BASKET</p>
       <div class="position-head"><h2 id="basketTitle">NONE</h2><span id="basketState" class="badge neutral">IDLE</span></div>
       <div id="floatingProfit" class="position-profit">$0.00</div>
       <div class="kv-grid">
@@ -106,7 +106,7 @@
 
   <section class="panel">
     <div class="section-head">
-      <div><p class="eyebrow">PERFORMANCE DATABASE</p><h2>Completed momentum baskets</h2></div>
+      <div><p class="eyebrow">PERFORMANCE DATABASE</p><h2>Completed momentum baskets</h2><p id="performanceScope" class="muted">Current EA version only</p></div>
       <div class="export-links">
         <a data-export="baskets" href="#">Baskets CSV</a><a data-export="legs" href="#">Legs CSV</a><a data-export="orders" href="#">Orders CSV</a><a data-export="banks" href="#">Banking CSV</a><a data-export="scans" href="#">Scans CSV</a>
       </div>

@@ -30,15 +30,15 @@ function operationalReason(ea, control) {
   if (ea.connectionStatus !== 'CONNECTED') return 'MARKET CLOSED OR NO FRESH MT5 HEARTBEAT — old scan values are ignored.';
   if (!control.autonomous || !ea.autonomous) return 'AUTONOMOUS OFF — no new price-trigger orders will be placed.';
   if (ea.emergency) return 'EMERGENCY STOP ACTIVE.';
-  if (String(ea.engineState || '').includes('LEGACY') || String(ea.lastEvent || '').includes('previous EVE')) return ea.lastEvent || 'Removing recognised v2.09/v2.10 EVE orders before v2.11 starts.';
+  if (String(ea.engineState || '').includes('LEGACY') || String(ea.lastEvent || '').includes('previous EVE')) return ea.lastEvent || 'Removing recognised older EVE orders before v3.00 starts.';
   if (ea.closePending) return ea.closeReason || 'Broker-side protection triggered — clearing the full campaign.';
   if (Number(ea.positionCount || 0) > 0) {
-    if (String(ea.campaignPhase || '').includes('OCO') || String(ea.engineState || '').includes('PROVISIONAL')) return 'POSITION 1 PROVISIONAL — its profit lock is active when earned; Position 2 is not armed until Position 1 already has the exact planned shared SL.';
-    return `ACTIVE ${ea.campaignCurrentSide || ea.side || ''} LADDER — every open position shares one SL and only one future stop is allowed ahead.`;
+    if (String(ea.campaignPhase || '').includes('SCOUT') || String(ea.engineState || '').includes('SCOUT')) return `DIRECTIONAL SCOUT — ${ea.scoutProofState || 'protecting profit and waiting for re-acceleration proof'}. No opposite reversal trade is allowed.`;
+    return `CONFIRMED ${ea.campaignCurrentSide || ea.side || ''} BASKET — every open position shares one SL; the next leg requires fresh re-acceleration and an already-profitable basket.`;
   }
   if (String(ea.campaignPhase || '').includes('WAIT QUIET')) return 'CAMPAIGN FINISHED — waiting for live speed to quieten before another burst can arm.';
   if (String(ea.engineState || '').includes('WIDE SPREAD')) return ea.bracketState || 'WIDE SPREAD SAFETY — pending entries are temporarily removed.';
-  if (Number(ea.bracketBuyPrice || 0) > 0 && Number(ea.bracketSellPrice || 0) > 0) return 'LIVE BURST BRACKET ARMED — one BUY STOP and one SELL STOP are active temporarily. Scores do not control them.';
+  if (Number(ea.bracketBuyPrice || 0) > 0 || Number(ea.bracketSellPrice || 0) > 0) return `DIRECTIONAL BURST SCOUT ARMED — ${Number(ea.bracketBuyPrice || 0) > 0 ? 'BUY STOP' : 'SELL STOP'} only. Scores do not control it.`;
   return 'WATCHING LIVE TICKS — no pending orders is normal until a genuine acceleration burst appears.';
 }
 
@@ -51,11 +51,11 @@ function fillSettings(s, force = false) {
   text('settingsVersion', `Settings v${s.version}`);
 }
 function render(payload) {
-  const { state, settings, performance, recentScans, recentBaskets, recentLegs, recentOrders, recentBanks, recentEvents } = payload;
+  const { state, settings, performance, performanceScope, recentScans, recentBaskets, recentLegs, recentOrders, recentBanks, recentEvents } = payload;
   const ea = state.ea || {}, control = state.control || {}, scan = state.latestScan || {};
   text('railway','ONLINE'); text('version',`v${state.version} • ${state.mode}`);
   const connectionLabel = ea.connectionStatus === 'DELAYED' && ea.terminalConnected ? 'TELEMETRY DELAYED' : (ea.connectionStatus || 'OFFLINE'); text('eaStatus', connectionLabel); $('eaStatus').className = ea.connectionStatus === 'CONNECTED' ? 'good-text' : ea.connectionStatus === 'DELAYED' ? 'warn-text' : 'bad-text';
-  text('eaDetail', ea.account ? `${ea.account} • ${ea.symbol} • EA ${ea.version || '—'}` : 'No heartbeat');
+  text('eaDetail', ea.account ? `${ea.account} • ${ea.symbol} • EA ${ea.version || '—'} • ${ea.strategy || '—'}` : 'No heartbeat');
   text('engineState', ea.campaignPhase || ea.engineState || '—'); text('engineDetail', `${ea.lastEvent || 'Waiting'}${ea.campaignStartSide && ea.campaignStartSide !== 'NONE' ? ` • ${ea.campaignStartSide}→${ea.campaignCurrentSide || ea.side || 'NONE'} • ${ea.campaignBuyLegs || 0} BUY/${ea.campaignSellLegs || 0} SELL` : ''}`);
   text('momentumState', ea.momentumState || '—'); text('momentumDetail', `DISPLAY ONLY • ${ea.buyScore || 0}/11 BUY • ${ea.sellScore || 0}/11 SELL`);
   text('autoTitle', `AUTONOMOUS ${control.autonomous ? 'ON' : 'OFF'}`); $('autoTitle').className = control.autonomous ? 'good-text' : 'bad-text';
@@ -64,11 +64,12 @@ function render(payload) {
   text('watchDirection', Number(ea.positionCount || 0) > 0 ? (ea.campaignCurrentSide || ea.side || 'NONE') : 'NONE'); text('buyScore', `${ea.buyScore || scan.buyScore || 0}/11`); text('sellScore', `${ea.sellScore || scan.sellScore || 0}/11`);
   text('bracketState', ea.bracketState || 'NONE'); text('buyStop', Number(ea.bracketBuyPrice) > 0 ? number(ea.bracketBuyPrice, 2) : '—'); text('sellStop', Number(ea.bracketSellPrice) > 0 ? number(ea.bracketSellPrice, 2) : '—');
   text('velocities', `${number(ea.velocity1s,3)} / ${number(ea.velocity3s,3)}`); text('tickRate', `x${number(ea.tickRateRatio,2)}`);
-  text('basketTitle', ea.positionCount ? `${ea.side} LADDER` : 'NONE'); text('basketState', ea.closePending ? 'CLOSE PENDING' : ea.positionCount ? 'ACTIVE' : 'IDLE');
+  text('basketTitle', ea.positionCount ? `${ea.side} ${Number(ea.positionCount) === 1 ? 'SCOUT' : 'BASKET'}` : 'NONE'); text('basketState', ea.closePending ? 'CLOSE PENDING' : ea.positionCount ? 'ACTIVE' : 'IDLE');
   setMoney('floatingProfit', ea.floatingProfit); text('positionCounts', `${ea.positionCount || 0} / ${ea.pendingCount || 0}`); text('totalLots', number(ea.totalLots,2)); text('averageEntry', Number(ea.averageEntry)>0 ? number(ea.averageEntry,2) : '—'); text('protectedStop', Number(ea.protectedStop)>0 ? number(ea.protectedStop,2) : '—');
   setMoney('peakProfit', ea.peakBasketProfit); setMoney('basketMae', ea.basketMae); text('newestTicket', ea.newestTicket || '—'); text('newestProfit', `${money(ea.newestLegProfit)} / ${money(ea.newestLegPeak)}`); text('newestAge', seconds(ea.newestLegAgeSeconds));
-  text('bankCandidate', ea.bankCandidate ? 'YES' : 'NO'); $('bankCandidate').className = ea.bankCandidate ? 'warn-text' : 'good-text'; text('bankReason', ea.bankReason || 'Position 1 uses a profit lock; confirmed positions share one pre-armed broker-side SL.'); text('closeInfo', ea.closePending ? `${ea.closeReason || 'Close pending'} • attempts ${ea.closeAttempts || 0}` : 'No close pending.');
+  text('bankCandidate', ea.bankCandidate ? 'YES' : 'NO'); $('bankCandidate').className = ea.bankCandidate ? 'warn-text' : 'good-text'; text('bankReason', ea.bankReason || 'The scout protects profit and banks on momentum stall; additions require proven re-acceleration.'); text('closeInfo', ea.closePending ? `${ea.closeReason || 'Close pending'} • attempts ${ea.closeAttempts || 0}` : 'No close pending.');
   setMoney('balance', ea.balance); setMoney('equity', ea.equity); setMoney('dailyPnl', ea.dailyPnl); text('basketsToday', ea.basketsToday ?? '—'); text('lossStreak', `${ea.consecutiveLosses ?? '—'} • TRACKING ONLY`); text('algo', ea.algoAllowed ? 'ALLOWED' : 'BLOCKED'); $('algo').className = ea.algoAllowed ? 'good-text' : 'bad-text'; text('spread', `${number(ea.spreadPoints,1)} pts`); text('extension', `${number(ea.extensionAtr,2)} ATR`); text('lastEvent', ea.lastEvent || 'Waiting');
+  text('performanceScope', `${performanceScope || 'CURRENT EA'} ONLY — older bot data is excluded`);
   const s = performance.summary || {};
   text('statBaskets', s.baskets || 0); text('statLegs', s.totalLegs || 0); text('statWinRate', `${number(s.winRate,1)}%`); setMoney('statNet', s.netProfit); text('statPf', s.profitFactor >= 999 ? '∞' : number(s.profitFactor,2)); setMoney('statAvg', s.averageBasket); text('statDuration', seconds(s.averageDurationSeconds)); setMoney('statBest', s.bestBasket); setMoney('statWorst', s.worstBasket); setMoney('statGiveback', s.averageGiveback); setMoney('statDrawdown', s.averageMaxDrawdown); setMoney('statPeak', s.peakFloatingProfit);
   statsRows('sideRows', performance.bySide, true); statsRows('bankStatRows', performance.byBankReason, false);

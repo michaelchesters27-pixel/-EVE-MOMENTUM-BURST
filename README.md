@@ -1,69 +1,85 @@
-# EVE MOMENTUM BURST v2.11
+# EVE MOMENTUM BURST v3.00
 
-Complete GitHub-ready replacement for v2.10.
+Complete GitHub-ready replacement for v2.11.
 
-## The key change
+## Why v3.00 exists
 
-v2.11 no longer creates a trade attempt simply because a new M1 candle has opened.
+The supplied v2.11 MT5 history was isolated by its `EVE31-*` comments. It contained 55 completed baskets and 70 positions.
 
-The EA watches live broker ticks continuously. It arms a temporary two-sided BUY STOP / SELL STOP bracket only after it detects a genuine price burst:
+The decisive finding was:
 
-- fast 1-second movement;
-- sustained 3-second movement in the same direction;
-- expanding speed;
-- an expanding tick-arrival rate;
-- a micro-breakout in the same direction;
-- normal spread.
+- 43 one-position baskets: **+$3.70 net**;
+- 12 baskets with two or three positions: **-$8.52 net**;
+- none of the multi-position baskets won;
+- no completed `EVE31-LAD` position appeared in the report.
 
-M1 ATR is used to judge whether the movement is meaningful. M5 is a soft directional bias: a counter-trend burst is still allowed, but it must be stronger.
+The scout position showed an edge. Adding a second position too easily destroyed it. v3.00 therefore protects the scout first and permits extra size only after the move proves itself again.
 
-## Campaign operation
+See `docs/V2.11-REPORT-ANALYSIS.md` for the complete isolated breakdown.
 
-1. The live tick engine waits with no pending orders.
-2. A genuine burst arms one BUY STOP and one SELL STOP around the recent micro-range.
-3. The first triggered position is provisional. The opposite stop remains live.
-4. The same-direction confirmation stop is not placed until Position 1 already carries the exact planned shared SL.
-5. A second BUY must fill above BUY 1; a second SELL must fill below SELL 1.
-6. After confirmation, the opposite stop is cancelled.
-7. Every open position receives one identical broker-side basket SL.
-8. Only one future ladder stop is permitted at a time.
-9. When the shared SL is reached, the campaign is cleared.
-10. The EA does not restart on a timer or at the next candle. It waits until live price quietens and then looks for a new burst.
+## v3.00 operating model
 
-## Position 1 protection
+1. The EA watches live broker ticks continuously.
+2. M1 ATR defines what meaningful movement looks like.
+3. M5 supplies a soft directional bias.
+4. A direction-consistent acceleration burst arms **one pending stop only**:
+   - BUY burst → one BUY STOP;
+   - SELL burst → one SELL STOP.
+5. When that order triggers, it becomes the **scout position**.
+6. Every other pending EVE order is removed. The EA never opens an opposite reversal or hedge inside that campaign.
+7. The scout receives a real broker-side SL.
+8. After useful profit appears, its SL dynamically protects about 65% of the best floating profit, subject to broker distance and execution.
+9. If live momentum stalls while useful profit remains, the EA banks the scout instead of waiting for a deeper retracement.
+10. Position 2 is considered only after all of these are true:
+    - scout peak profit is at least $0.60;
+    - estimated current net profit is at least $0.35;
+    - a broker-side profit lock is already active;
+    - price re-accelerates in the same direction;
+    - tick activity expands;
+    - a fresh same-direction micro-break occurs;
+    - M5 is not directly opposite.
+11. Position 2 and the scout share the same broker-side SL.
+12. After confirmation, only one future ladder stop is allowed, and only while the basket is already profitable and price re-accelerates again.
 
-Position 1 has no fixed TP.
+## Default protection values
 
-After its floating profit reaches the configured trigger, its real broker-side SL moves into profit and retains part of the best profit reached. By default:
+- Initial scout SL: `0.75 × M1 ATR`, adjusted for broker rules.
+- Fixed TP: none.
+- Profit-lock trigger: `$0.20` peak.
+- Minimum intended protected net profit: `$0.10`.
+- Profit-lock giveback: `35%`, retaining about `65%` of peak.
+- Momentum-stall bank activates after at least `$0.25` peak and `$0.05` estimated current net.
+- Position 2 proof: `$0.60` peak and `$0.35` estimated current net plus live re-acceleration.
 
-- trigger: $0.20;
-- minimum intended protected profit: $0.10;
-- giveback: 50%.
+These are EA inputs and can be changed later after a meaningful demo sample. They are not controlled by the dashboard analytics score.
 
 ## Execution safety
 
-- Abnormal spread removes pending entries.
-- BUY stop-loss watchdog uses Bid.
-- SELL stop-loss watchdog uses Ask.
-- Wrong-sequence fills close the campaign.
+- Wide spread removes pending entries but leaves open positions protected.
+- BUY SL watchdog uses Bid.
+- SELL SL watchdog uses Ask.
+- Wrong-sequence or non-progressing fills close the full campaign.
+- Any mixed BUY/SELL state closes the full campaign; no reversal is adopted.
 - A fill whose SL is already invalid closes the campaign.
 - Pending orders are cancelled before forced basket closure.
-- v2.09 and v2.10 orders are isolated from v2.11.
+- Only one confirmation or ladder pending order may survive.
+- v2.09, v2.10 and v2.11 orders are isolated from v3.00.
+- Railway performance is filtered to v3.00 magic `2207202630`; older dashboard records are excluded.
 
 ## Version identity
 
-- EA version: `2.11`
-- Railway version: `2.0.11`
-- Magic number: `2207202611`
-- Order comments: `EVE31-INIT`, `EVE31-CONF`, `EVE31-LAD`
-- Persistent state prefix: `EMB211_*`
+- EA version: `3.00`
+- Railway version: `3.0.0`
+- Magic number: `2207202630`
+- Order comments: `EVE3-INIT`, `EVE3-CONF`, `EVE3-LAD`
+- Persistent state prefix: `EMB300_*`
 
 ## Package contents
 
-- `mt5/EVE_Momentum_Burst_EA_v2.11.mq5`
+- `mt5/EVE_Momentum_Burst_EA_v3.00.mq5`
 - `railway/`
 - `supabase/schema.sql`
 - `docs/`
 - `tools/`
 
-MetaEditor is the definitive MQL5 compiler. Compile with **0 errors** and run on an IC Markets demo account before considering live use.
+MetaEditor is the definitive MQL5 compiler. Compile with **0 errors** and test on the IC Markets demo account before any live consideration.

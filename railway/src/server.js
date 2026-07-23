@@ -12,6 +12,7 @@ const SUPABASE_URL = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SUPABASE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 const EA_DELAYED_MS = 45_000;
 const EA_OFFLINE_MS = 120_000;
+const CURRENT_EA_MAGIC = '2207202630';
 const MAX = { scans: 40_000, baskets: 5_000, legs: 30_000, orders: 30_000, banks: 10_000, events: 5_000 };
 
 export const nowIso = () => new Date().toISOString();
@@ -86,11 +87,11 @@ export function validateSettings(input = {}, current = DEFAULT_SETTINGS) {
 let settings = validateSettings(loadJson(files.settings, DEFAULT_SETTINGS));
 
 const state = {
-  version: '2.0.11', service: 'EVE MOMENTUM BURST', mode: 'LIVE TICK BURST + M1 ATR + M5 SOFT BIAS + SHARED BASKET SL', startedAt: nowIso(),
+  version: '3.0.0', service: 'EVE MOMENTUM BURST', mode: 'DIRECTIONAL SCOUT + PROFIT-STALL BANKING + RE-ACCELERATION LADDER', startedAt: nowIso(),
   control: { autonomous: String(process.env.AUTO_ENABLED || 'true').toLowerCase() !== 'false', emergency: false, manualNewsLock: false },
   command: { id: 0, action: 'NONE', createdAt: nowIso(), consumedAt: null, result: null },
   ea: {
-    online: false, connectionStatus: 'OFFLINE', lastSeenAt: null, account: null, symbol: null, version: null,
+    online: false, connectionStatus: 'OFFLINE', lastSeenAt: null, account: null, symbol: null, version: null, magic: null, strategy: null, scoutProofState: null,
     balance: null, equity: null, margin: null, freeMargin: null, marginLevel: null,
     bid: null, ask: null, spreadPoints: null, medianSpreadPoints: null,
     terminalConnected: false, algoAllowed: false, autonomous: false, emergency: false,
@@ -141,6 +142,13 @@ function queueCommand(action, source = 'dashboard') {
   addEvent('command', `${action} queued`, { id: state.command.id, source }); return state.command;
 }
 function commandPending() { return state.command.action !== 'NONE' && !state.command.consumedAt; }
+
+function currentMagic() { return String(state.ea.magic || CURRENT_EA_MAGIC).trim(); }
+export function filterRecordsByMagic(items, magic = CURRENT_EA_MAGIC) {
+  const wanted = String(magic || CURRENT_EA_MAGIC).trim();
+  return items.filter(item => String(item?.magic || '').trim() === wanted);
+}
+function currentVersionRecords(items) { return filterRecordsByMagic(items, currentMagic()); }
 
 function groupStats(completed, selector) {
   const map = new Map();
@@ -232,7 +240,9 @@ export function createHttpServer() {
       const auth = authorised(request, url, body); if (!auth.ok) return sendJson(request, response, auth.status, { ok: false, error: auth.error });
 
       if (request.method === 'GET' && pathname === '/api/state') {
-        refreshEaConnection(); return sendJson(request, response, 200, { ok: true, state, settings, performance: calculatePerformance(baskets), recentScans: scans.slice(0, 150), recentBaskets: baskets.slice(0, 150), recentLegs: legs.slice(0, 250), recentOrders: orders.slice(0, 250), recentBanks: banks.slice(0, 150), recentEvents: events.slice(0, 150) });
+        refreshEaConnection();
+        const currentBaskets = currentVersionRecords(baskets), currentScans = currentVersionRecords(scans), currentLegs = currentVersionRecords(legs), currentOrders = currentVersionRecords(orders), currentBanks = currentVersionRecords(banks);
+        return sendJson(request, response, 200, { ok: true, state, settings, performance: calculatePerformance(currentBaskets), allVersionPerformance: calculatePerformance(baskets), performanceScope: `MAGIC ${currentMagic()}`, recentScans: currentScans.slice(0, 150), recentBaskets: currentBaskets.slice(0, 150), recentLegs: currentLegs.slice(0, 250), recentOrders: currentOrders.slice(0, 250), recentBanks: currentBanks.slice(0, 150), recentEvents: events.slice(0, 150) });
       }
       if (request.method === 'GET' && pathname === '/api/settings') return sendJson(request, response, 200, { ok: true, settings });
       if (request.method === 'POST' && pathname === '/api/settings') {
@@ -255,7 +265,7 @@ export function createHttpServer() {
         return sendJson(request, response, 200, { ok: true, receivedAt: state.ea.lastSeenAt });
       }
       if (request.method === 'POST' && pathname === '/api/ea/scan') { const r = addRecord(scans, files.scans, MAX.scans, 'eve_momentum_scans', body); state.latestScan = r; return sendJson(request, response, 200, { ok: true, id: r.id }); }
-      if (request.method === 'POST' && pathname === '/api/ea/basket') { const r = upsertBasket(body); addEvent('basket', `${r.side || 'BASKET'} closed ${safeNumber(r.netProfit).toFixed(2)}`, { exitReason: r.exitReason, positionsOpened: r.positionsOpened }); return sendJson(request, response, 200, { ok: true, id: r.id, performance: calculatePerformance(baskets) }); }
+      if (request.method === 'POST' && pathname === '/api/ea/basket') { const r = upsertBasket(body); addEvent('basket', `${r.side || 'BASKET'} closed ${safeNumber(r.netProfit).toFixed(2)}`, { exitReason: r.exitReason, positionsOpened: r.positionsOpened }); return sendJson(request, response, 200, { ok: true, id: r.id, performance: calculatePerformance(currentVersionRecords(baskets)) }); }
       if (request.method === 'POST' && pathname === '/api/ea/leg') { const r = addRecord(legs, files.legs, MAX.legs, 'eve_momentum_legs', body); return sendJson(request, response, 200, { ok: true, id: r.id }); }
       if (request.method === 'POST' && pathname === '/api/ea/order') { const r = addRecord(orders, files.orders, MAX.orders, 'eve_momentum_orders', body); return sendJson(request, response, 200, { ok: true, id: r.id }); }
       if (request.method === 'POST' && pathname === '/api/ea/bank') { const r = addRecord(banks, files.banks, MAX.banks, 'eve_momentum_bank_decisions', body); return sendJson(request, response, 200, { ok: true, id: r.id }); }
@@ -270,7 +280,8 @@ export function createHttpServer() {
         if (!supported.has(action)) return sendJson(request, response, 400, { ok: false, error: 'Unsupported command' });
         return sendJson(request, response, 200, { ok: true, command: queueCommand(action) });
       }
-      const exports = { scans, baskets, legs, orders, banks, events };
+      const currentOnly = url.searchParams.get('all') !== '1';
+      const exports = { scans: currentOnly ? currentVersionRecords(scans) : scans, baskets: currentOnly ? currentVersionRecords(baskets) : baskets, legs: currentOnly ? currentVersionRecords(legs) : legs, orders: currentOnly ? currentVersionRecords(orders) : orders, banks: currentOnly ? currentVersionRecords(banks) : banks, events };
       const match = pathname.match(/^\/api\/export\/(scans|baskets|legs|orders|banks|events)\.csv$/);
       if (request.method === 'GET' && match) return sendText(request, response, 200, csvData(exports[match[1]].slice().reverse()), 'text/csv; charset=utf-8', { 'Content-Disposition': `attachment; filename="eve-momentum-${match[1]}.csv"` });
       return sendJson(request, response, 404, { ok: false, error: 'Not found' });

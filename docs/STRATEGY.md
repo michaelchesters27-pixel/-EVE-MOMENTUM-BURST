@@ -1,56 +1,96 @@
-# Strategy specification — v2.11
+# Strategy specification — v3.00
 
-## Time handling
+## 1. Market observation
 
 - Execution is tick-by-tick.
-- M1 ATR defines normal volatility.
+- M1 ATR measures current volatility.
 - M5 supplies a soft directional bias.
-- Candle opening does not create a trade attempt.
+- A candle opening does not create a trade attempt.
+- Analytics scores are displayed but never gate an order.
 
-## Burst arming
+## 2. Directional burst arming
 
 While flat, the EA normally has no pending orders.
 
-A bracket is armed only when live movement is direction-consistent:
+A directional scout is armed only when the same direction passes all live tests:
 
-- 1-second velocity exceeds its ATR-normalised threshold;
-- 3-second velocity confirms the same direction;
-- 1-second speed is expanding versus 3-second speed;
-- tick arrival rate is above its 30-second baseline;
-- price breaks the recent micro-range;
-- spread remains acceptable.
+- 1-second ATR-normalised velocity;
+- 3-second velocity in the same direction;
+- acceleration of 1-second speed versus 3-second speed;
+- expanding tick-arrival rate;
+- a fresh micro-range breakout;
+- acceptable spread.
 
-A burst against M5 is permitted, but it must exceed stronger thresholds.
+A counter-M5 burst is allowed only if it is stronger by the configured multiplier.
 
-The bracket expires if neither side triggers within its lifetime. A new bracket is not permitted until live velocity quietens.
+Default mode places one order only:
 
-## First trigger
+- BUY burst → BUY STOP;
+- SELL burst → SELL STOP.
 
-The first BUY or SELL is provisional. The opposite stop remains active.
+If it does not trigger within the burst lifetime, it is removed. A fresh scout cannot arm until the market first quietens and then produces a new burst.
 
-Position 1 receives a real broker-side SL. Once it reaches the configured profit trigger, that SL moves into profit using the Position 1 giveback rule.
+## 3. Scout position
 
-## Confirmation
+The first fill is the scout. All other EVE pending orders are cancelled.
 
-A second BUY confirms only if its actual fill is above BUY 1. A second SELL confirms only if its actual fill is below SELL 1.
+The scout:
 
-Before Position 2 is submitted, Position 1 must already carry the exact SL that Position 2 will receive.
+- has a real broker-side initial SL;
+- has no fixed TP;
+- never flips into an opposite campaign;
+- starts dynamically locking profit after its peak reaches the configured trigger;
+- can be banked when momentum stalls while useful net profit remains.
 
-If the opposite stop triggers first, the original breakout is treated as failed. The failed side is closed and the new side becomes provisional.
+For a BUY scout, live support means positive 1-second and 3-second velocity. For a SELL scout, both must remain negative. If support disappears for the configured confirmation period after a useful peak, the basket is closed to bank the remaining profit.
 
-## Confirmed ladder
+## 4. Position 2 proof
 
-After confirmation:
+Position 2 is not placed simply because price moved a fixed distance.
 
-- the opposite stop is removed;
-- all open positions share one exact broker-side SL;
-- only one same-direction ladder stop exists ahead;
-- the next stop is not placed until every open position already carries the SL that the future position will receive.
+The scout must first prove itself through:
 
-## Exit
+- minimum peak profit;
+- minimum retained estimated net profit;
+- an active broker-side profit lock;
+- same-direction 1-second and 3-second re-acceleration;
+- sufficient acceleration ratio;
+- sufficient tick-rate expansion;
+- a fresh same-direction micro-break;
+- no directly opposite M5 bias.
 
-The shared SL is the normal campaign exit.
+The confirmation order expires quickly if the proof fades. The scout remains protected and can still bank on a momentum stall.
 
-The EA also checks live Bid for BUY positions and live Ask for SELL positions. If a position remains open after its SL is crossed, the EA removes pending entries and force-closes the remaining basket.
+## 5. Confirmed ladder
 
-There is no fixed TP, session gate, campaign timer, score gate, maximum-position gate or total-lot gate in the strategy logic.
+When Position 2 genuinely fills farther in the correct direction:
+
+- the campaign becomes confirmed;
+- every open position is synchronised to one shared broker-side SL;
+- only one future ladder stop may exist;
+- the basket must already meet the minimum profit requirement;
+- each new order requires a fresh re-acceleration signal.
+
+A later BUY fill must be above the previous BUY trigger. A later SELL fill must be below the previous SELL trigger. Any non-progressing fill is an execution-integrity breach and the full basket is closed.
+
+## 6. Exit logic
+
+### Scout exits
+
+The scout can finish through:
+
+- its initial SL;
+- its dynamic profit-lock SL;
+- a direct EA bank when useful profit remains but momentum has stalled;
+- execution-integrity protection;
+- manual close, pause handling or emergency stop.
+
+### Confirmed basket exits
+
+All positions share one broker-side SL. If any shared SL is reported as hit, or live Bid/Ask crosses the stop while the broker leaves a position open, the EA cancels pending entries and clears the full basket.
+
+There is no fixed TP, score gate, session gate, campaign-duration gate, maximum-position strategy gate or total-lot strategy gate.
+
+## 7. No in-campaign reversal
+
+v3.00 never treats an opposite fill as a new campaign direction. A mixed BUY/SELL state is considered unsafe and causes the entire campaign to be closed.
