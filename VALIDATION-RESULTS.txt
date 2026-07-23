@@ -1,0 +1,9 @@
+EVE MOMENTUM BURST v2.11 VALIDATION RESULTS
+
+PASS: static MQL source structure and invariants
+PASS: 24 deterministic execution-safety model checks
+PASS: Railway automated tests 4/4
+PASS: Railway JavaScript syntax checks
+
+Important: MetaEditor is not installed in this environment. Compile
+mt5/EVE_Momentum_Burst_EA_v2.11.mq5 in MetaEditor and require 0 errors.

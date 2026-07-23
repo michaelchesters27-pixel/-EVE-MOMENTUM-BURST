@@ -1,52 +1,46 @@
-# Demo testing procedure — v2.10
+# Demo testing procedure — v2.11
 
-## Before testing
+1. Keep Algo Trading off.
+2. Close old v2.09/v2.10 positions and delete their pending orders.
+3. Replace the full GitHub repository with this package.
+4. Compile `mt5/EVE_Momentum_Burst_EA_v2.11.mq5` in MetaEditor with 0 errors.
+5. Attach it to XAUUSD M1 on the IC Markets demo account.
+6. Turn Algo Trading on.
+7. Allow at least 30 seconds for the live tick buffer to warm.
 
-1. Compile `mt5/EVE_Momentum_Burst_EA_v2.10.mq5` with 0 errors.
-2. Use an IC Markets demo hedging account.
-3. Confirm EA version 2.10 in MT5 and Railway.
-4. Confirm no v2.09 position or pending order remains.
+## Flat-state test
 
-## Flat bracket test
+Confirm the EA normally shows `WATCHING LIVE TICKS` with no pending orders.
 
-Confirm one BUY STOP and one SELL STOP are live. On a new M1 candle, confirm each side is refreshed individually rather than intentionally deleting both at once.
+During a genuine fast move, confirm:
 
-## One-attempt-per-candle test
+- one BUY STOP and one SELL STOP appear;
+- the dashboard says `TICK-BURST BRACKET READY`;
+- if neither triggers within the configured lifetime, both are removed;
+- the EA waits for a quiet reset before arming again.
 
-Allow a campaign to start and finish within one M1 candle. Confirm no fresh bracket appears until the next M1 candle starts.
+## Provisional test
 
-## Position 1 profit-lock test
+After Position 1 triggers:
 
-Allow Position 1 to trigger without Position 2:
+- the opposite stop remains;
+- the same-direction Position 2 stop is prepared only after Position 1 has the same planned SL;
+- a profitable Position 1 moves its real SL into profit;
+- a wrong-direction or non-progressing fill causes campaign closure.
 
-- before the configured profit trigger, the original broker SL remains;
-- after the peak reaches the trigger, Position 1's real SL moves into profit;
-- as the peak increases, the SL may improve but must never weaken;
-- there is no fixed TP;
-- if price retraces, Position 1 closes in protected profit rather than returning to a normal full loss.
-
-## Confirmation pre-arm test
-
-Before Position 2 appears, confirm Position 1 already has the exact SL shown on the pending Position 2 order. A second BUY must be above BUY 1; a second SELL must be below SELL 1.
-
-## One-order-ahead ladder test
+## Confirmed ladder test
 
 After Position 2 confirms:
 
-- the opposite stop is removed;
-- all open positions show one identical SL;
-- only one future same-direction ladder stop exists;
-- before that stop is placed, all existing positions already show its exact SL;
-- after it triggers, only one replacement future stop is prepared.
-
-## Exit test
-
-Reverse price through the shared SL. Confirm open positions close around the shared level, remaining pending orders are removed, and the EA waits for the next M1 candle.
+- the opposite pending stop disappears;
+- all open positions display the exact same SL;
+- only one future ladder pending order exists;
+- when that shared SL is reached, the entire campaign finishes.
 
 ## Spread test
 
-Increase or observe an abnormal spread on demo. Confirm fresh pending entries are removed, existing positions retain broker-side SL protection, and pending entries return only after spread normalises.
+During an abnormal spread:
 
-## Execution-integrity test
-
-Confirm a later BUY fill below the previous BUY, a later SELL fill above the previous SELL, an SL on the wrong side of the newest fill, or an open position beyond its SL causes full-campaign quarantine.
+- no fresh pending entries remain;
+- open positions keep their broker-side SL;
+- entries may resume only after spread normalises and a fresh burst is detected.

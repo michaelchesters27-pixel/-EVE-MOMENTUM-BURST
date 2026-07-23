@@ -86,7 +86,7 @@ export function validateSettings(input = {}, current = DEFAULT_SETTINGS) {
 let settings = validateSettings(loadJson(files.settings, DEFAULT_SETTINGS));
 
 const state = {
-  version: '2.0.10', service: 'EVE MOMENTUM BURST', mode: 'ONE ATTEMPT PER M1 CANDLE + POSITION 1 PROFIT LOCK + ONE PRE-ARMED LADDER STOP', startedAt: nowIso(),
+  version: '2.0.11', service: 'EVE MOMENTUM BURST', mode: 'LIVE TICK BURST + M1 ATR + M5 SOFT BIAS + SHARED BASKET SL', startedAt: nowIso(),
   control: { autonomous: String(process.env.AUTO_ENABLED || 'true').toLowerCase() !== 'false', emergency: false, manualNewsLock: false },
   command: { id: 0, action: 'NONE', createdAt: nowIso(), consumedAt: null, result: null },
   ea: {

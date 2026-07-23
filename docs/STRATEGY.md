@@ -1,53 +1,56 @@
-# Strategy specification — v2.10
+# Strategy specification — v2.11
 
-## Flat state
+## Time handling
 
-The EA maintains one current-candle BUY STOP and one current-candle SELL STOP. At a new M1 candle, it refreshes each side individually while the other side remains live.
+- Execution is tick-by-tick.
+- M1 ATR defines normal volatility.
+- M5 supplies a soft directional bias.
+- Candle opening does not create a trade attempt.
 
-Only one campaign attempt is permitted per M1 candle. When a campaign finishes, the EA waits for the next M1 candle before creating another bracket. This is candle discipline, not a timed cooldown.
+## Burst arming
+
+While flat, the EA normally has no pending orders.
+
+A bracket is armed only when live movement is direction-consistent:
+
+- 1-second velocity exceeds its ATR-normalised threshold;
+- 3-second velocity confirms the same direction;
+- 1-second speed is expanding versus 3-second speed;
+- tick arrival rate is above its 30-second baseline;
+- price breaks the recent micro-range;
+- spread remains acceptable.
+
+A burst against M5 is permitted, but it must exceed stronger thresholds.
+
+The bracket expires if neither side triggers within its lifetime. A new bracket is not permitted until live velocity quietens.
 
 ## First trigger
 
-The first BUY or SELL is provisional. The opposite stop remains live and one same-direction confirmation stop is prepared.
+The first BUY or SELL is provisional. The opposite stop remains active.
 
-If the opposite stop triggers before the second same-side stop, the first breakout failed. The failed side is closed and the newly triggered side becomes provisional within the same campaign.
-
-## Position 1 profit protection
-
-Position 1 has no fixed TP. Once it reaches the configured peak-profit trigger, the EA moves its actual broker-side SL into profit.
-
-The default lock retains half of the best Position 1 floating profit, subject to the configured minimum protected profit and trading-cost reserve. The SL only moves in the protective direction; it is never deliberately weakened.
-
-If profit gives back before the broker permits the SL to be armed, the EA requests a campaign close rather than allowing Position 1 to return to a normal full loss.
+Position 1 receives a real broker-side SL. Once it reaches the configured profit trigger, that SL moves into profit using the Position 1 giveback rule.
 
 ## Confirmation
 
-A second BUY confirms only when its actual fill is higher than BUY 1. A second SELL confirms only when its actual fill is lower than SELL 1.
+A second BUY confirms only if its actual fill is above BUY 1. A second SELL confirms only if its actual fill is below SELL 1.
 
-Before Position 2 is placed:
+Before Position 2 is submitted, Position 1 must already carry the exact SL that Position 2 will receive.
 
-- the intended shared SL is calculated from Position 1, the proposed Position 2 entry, lot size, cost reserve and required net profit;
-- Position 1 must already carry that exact SL;
-- Position 2 is then submitted with the same SL already attached.
-
-A wrong-sequence fill or an already-crossed SL triggers full campaign quarantine and closure.
+If the opposite stop triggers first, the original breakout is treated as failed. The failed side is closed and the new side becomes provisional.
 
 ## Confirmed ladder
 
-After confirmation, the opposite pending stop is removed.
+After confirmation:
 
-Only one future same-direction ladder stop may exist. Before it is placed, every current position must already carry the exact SL that the future position will receive. When that pending order triggers, the basket is recalculated from the actual fills before one new future order is prepared.
+- the opposite stop is removed;
+- all open positions share one exact broker-side SL;
+- only one same-direction ladder stop exists ahead;
+- the next stop is not placed until every open position already carries the SL that the future position will receive.
 
-## Basket exit
+## Exit
 
-All confirmed positions share one broker-side SL. When that SL is reached, the broker is intended to close the positions together. The EA then removes any remaining pending campaign order and waits for the next M1 candle.
+The shared SL is the normal campaign exit.
 
-The EA also independently watches Bid for BUY positions and Ask for SELL positions. If the broker leaves a position open after its SL is crossed, pending entries are quarantined and the full remaining basket is force-closed.
+The EA also checks live Bid for BUY positions and live Ask for SELL positions. If a position remains open after its SL is crossed, the EA removes pending entries and force-closes the remaining basket.
 
-## Wide-spread handling
-
-During an abnormal spread, fresh pending entries are removed. Existing positions remain protected by their broker-side SL. Entry orders are restored automatically when spread normalises.
-
-## What does not control entries
-
-BUY/SELL analytics scores are display-only. There is no score gate, session gate, campaign-duration gate, fixed TP, maximum-position gate or maximum-total-lot gate in the strategy logic.
+There is no fixed TP, session gate, campaign timer, score gate, maximum-position gate or total-lot gate in the strategy logic.

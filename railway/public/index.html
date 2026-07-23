@@ -3,16 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EVE Momentum Burst v2.10</title>
+  <title>EVE Momentum Burst v2.11</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 <main class="wrap">
   <header class="hero">
     <div>
-      <p class="eyebrow">XAUUSD • M1 • ONE CAMPAIGN ATTEMPT PER CANDLE • PRE-ARMED SHARED SL</p>
+      <p class="eyebrow">XAUUSD • TICK-BY-TICK EXECUTION • M1 VOLATILITY • M5 SOFT BIAS</p>
       <h1>EVE MOMENTUM BURST</h1>
-      <p class="subtitle">Each eligible M1 candle gets one BUY STOP and one SELL STOP. Position 1 protects half of its best profit once the lock activates. Before Position 2 or any later ladder order is armed, every existing position already carries the exact same broker-side SL. Only one future ladder stop is allowed at a time.</p>
+      <p class="subtitle">The EA waits for genuine live acceleration before arming a temporary BUY STOP and SELL STOP. M1 ATR measures whether the move matters; M5 is a soft bias. Position 1 protects profit, confirmed positions share one broker-side SL, and only one future ladder stop is allowed ahead.</p>
     </div>
     <span id="systemBadge" class="badge neutral">CONNECTING</span>
   </header>
@@ -49,7 +49,7 @@
     <div class="buttons">
       <button data-action="ENABLE_AUTO" class="positive">Enable autonomous</button>
       <button data-action="DISABLE_AUTO" class="danger">Disable autonomous</button>
-      <button data-action="REBUILD_BRACKET">Rebuild bracket</button>
+      <button data-action="REBUILD_BRACKET">Reset burst watcher</button>
       <button data-action="PAUSE_EA">Pause new entries</button>
       <button data-action="RESUME_EA">Resume</button>
     </div>
@@ -63,7 +63,7 @@
       <label><span>Equity for each 0.01 lot</span><input id="equityPer001Lot" type="number" min="10" step="10"></label>
     </div>
     <div class="buttons"><button id="applySettings" class="positive">Apply lot settings</button></div>
-    <p id="operatingModeNotice" class="notice">24/5 price-trigger engine: scores are display-only. One campaign attempt is allowed per M1 candle, with no timed cooldown or session gate. Wide-spread safety temporarily removes pending entries while open positions retain their broker-side SL. Position 1 uses a profit lock, and only one pre-armed ladder stop is allowed ahead.</p>
+    <p id="operatingModeNotice" class="notice">24/5 live tick-burst engine: scores are display-only. No candle opening forces a trade. The EA arms only after direction-consistent acceleration, tick expansion and a micro-breakout. Wide-spread safety removes pending entries while open positions retain broker-side protection.</p>
   </section>
 
   <section class="two-col">

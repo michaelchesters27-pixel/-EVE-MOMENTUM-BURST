@@ -30,16 +30,16 @@ function operationalReason(ea, control) {
   if (ea.connectionStatus !== 'CONNECTED') return 'MARKET CLOSED OR NO FRESH MT5 HEARTBEAT — old scan values are ignored.';
   if (!control.autonomous || !ea.autonomous) return 'AUTONOMOUS OFF — no new price-trigger orders will be placed.';
   if (ea.emergency) return 'EMERGENCY STOP ACTIVE.';
-  if (String(ea.engineState || '').includes('LEGACY') || String(ea.lastEvent || '').includes('previous EVE')) return ea.lastEvent || 'Removing v2.09 EVE orders before v2.10 starts.';
+  if (String(ea.engineState || '').includes('LEGACY') || String(ea.lastEvent || '').includes('previous EVE')) return ea.lastEvent || 'Removing recognised v2.09/v2.10 EVE orders before v2.11 starts.';
   if (ea.closePending) return ea.closeReason || 'Broker-side protection triggered — clearing the full campaign.';
   if (Number(ea.positionCount || 0) > 0) {
     if (String(ea.campaignPhase || '').includes('OCO') || String(ea.engineState || '').includes('PROVISIONAL')) return 'POSITION 1 PROVISIONAL — its profit lock is active when earned; Position 2 is not armed until Position 1 already has the exact planned shared SL.';
     return `ACTIVE ${ea.campaignCurrentSide || ea.side || ''} LADDER — every open position shares one SL and only one future stop is allowed ahead.`;
   }
-  if (String(ea.campaignPhase || '').includes('WAIT NEXT')) return 'ONE CAMPAIGN ATTEMPT HAS FINISHED — waiting only for the next M1 candle.';
+  if (String(ea.campaignPhase || '').includes('WAIT QUIET')) return 'CAMPAIGN FINISHED — waiting for live speed to quieten before another burst can arm.';
   if (String(ea.engineState || '').includes('WIDE SPREAD')) return ea.bracketState || 'WIDE SPREAD SAFETY — pending entries are temporarily removed.';
-  if (Number(ea.bracketBuyPrice || 0) > 0 && Number(ea.bracketSellPrice || 0) > 0) return 'PRICE ENGINE ARMED — one BUY STOP and one SELL STOP are live for this M1 candle. Scores do not control them.';
-  return 'WAITING FOR THE BROKER MARKET TO OPEN AND A FRESH TICK — scores do not control the bracket.';
+  if (Number(ea.bracketBuyPrice || 0) > 0 && Number(ea.bracketSellPrice || 0) > 0) return 'LIVE BURST BRACKET ARMED — one BUY STOP and one SELL STOP are active temporarily. Scores do not control them.';
+  return 'WATCHING LIVE TICKS — no pending orders is normal until a genuine acceleration burst appears.';
 }
 
 function fillSettings(s, force = false) {
