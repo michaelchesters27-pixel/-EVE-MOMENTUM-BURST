@@ -1,4 +1,4 @@
-# Validation record — v3.00
+# Validation record — v3.01
 
 Automated validation checks:
 

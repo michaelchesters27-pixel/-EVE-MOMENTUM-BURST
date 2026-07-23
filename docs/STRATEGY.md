@@ -1,4 +1,4 @@
-# Strategy specification — v3.00
+# Strategy specification — v3.01
 
 ## 1. Market observation
 
@@ -93,4 +93,8 @@ There is no fixed TP, score gate, session gate, campaign-duration gate, maximum-
 
 ## 7. No in-campaign reversal
 
-v3.00 never treats an opposite fill as a new campaign direction. A mixed BUY/SELL state is considered unsafe and causes the entire campaign to be closed.
+v3.01 never treats an opposite fill as a new campaign direction. A mixed BUY/SELL state is considered unsafe and causes the entire campaign to be closed.
+
+## Broker-rejected profit-lock handling
+
+Position 1 protection has absolute execution priority. The EA calculates the desired profit SL, clamps it to the nearest legal level using the broker stop level, freeze level, tick size and an extra buffer, and submits that legal price. If the broker rejects it, the EA recalculates once farther away. If that is also rejected, or no legal profitable SL exists, the EA closes Position 1 before trying to clean any pending order. Frozen pending orders cannot block this path.

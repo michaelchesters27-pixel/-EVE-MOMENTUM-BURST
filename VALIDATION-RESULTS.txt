@@ -1,10 +1,16 @@
-EVE MOMENTUM BURST v3.00 VALIDATION RESULTS
+EVE MOMENTUM BURST v3.01 VALIDATION RESULTS
 
-PASS: static MQL source structure and strategy invariants
-PASS: 15 deterministic data-driven strategy checks
-PASS: Railway automated tests 5/5
-PASS: Railway JavaScript syntax checks
-PASS: current-magic dashboard filtering
+PASSED
+- Static MQL5 source structure validation
+- StringFormat placeholder/argument validation
+- 177 unique MQL5 functions; no duplicate definitions
+- Protection-first execution ordering checks
+- Broker-legal stop clamp and immediate-close fallback invariants
+- 16 deterministic strategy/execution checks
+- Railway JavaScript syntax checks
+- Railway automated tests: 5/5 passed
 
-Important: MetaEditor is not installed in this environment. Compile
-mt5/EVE_Momentum_Burst_EA_v3.00.mq5 in MetaEditor and require 0 errors.
+REQUIRES LOCAL CONFIRMATION
+MetaEditor is the definitive MQL5 compiler. Compile:
+mt5/EVE_Momentum_Burst_EA_v3.01.mq5
+and require 0 errors before attaching it to MT5.

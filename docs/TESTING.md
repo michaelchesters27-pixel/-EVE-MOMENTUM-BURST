@@ -1,11 +1,11 @@
-# Demo testing procedure — v3.00
+# Demo testing procedure — v3.01
 
 ## Clean deployment
 
 1. Keep Algo Trading off.
 2. Close/delete all v2.09, v2.10 and v2.11 positions and pending orders.
 3. Replace the full GitHub repository.
-4. Compile `mt5/EVE_Momentum_Burst_EA_v3.00.mq5` in MetaEditor with 0 errors.
+4. Compile `mt5/EVE_Momentum_Burst_EA_v3.01.mq5` in MetaEditor with 0 errors.
 5. Attach it to XAUUSD M1 on the IC Markets demo account.
 6. Turn Algo Trading on.
 7. Allow at least 30 seconds for live-tick warmup.
@@ -56,4 +56,13 @@ After Position 2 fills:
 
 ## Dashboard data test
 
-Confirm the performance section says `MAGIC 2207202630 ONLY`. Old v2.11 results must not appear in the v3.00 statistics.
+Confirm the performance section says `MAGIC 2207202631 ONLY`. Old v2.11 results must not appear in the v3.01 statistics.
+
+## Mandatory v3.01 protection proof
+
+Before allowing an unattended demo run, observe at least 10 scout positions that reach the $0.20 profit-lock trigger. For every one of them, confirm one of these two outcomes:
+
+1. MT5 shows a broker-side SL above the BUY entry or below the SELL entry; or
+2. the EA immediately closes the scout and reports `PROFIT PROTECTION FALLBACK`.
+
+A frozen pending order must not delay either outcome. In Experts, there must be no sequence where `invalid stops` is followed by the scout remaining open without a profitable SL or urgent-close retries.

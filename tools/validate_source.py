@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Static validation for EVE Momentum Burst v3.00."""
+"""Static validation for EVE Momentum Burst v3.01."""
 from __future__ import annotations
 
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "mt5" / "EVE_Momentum_Burst_EA_v3.00.mq5"
+SOURCE = ROOT / "mt5" / "EVE_Momentum_Burst_EA_v3.01.mq5"
 SERVER = ROOT / "railway" / "src" / "server.js"
 APP = ROOT / "railway" / "public" / "app.js"
 PACKAGE = ROOT / "railway" / "package.json"
@@ -177,16 +177,16 @@ def main() -> int:
     if duplicates: fail(f"duplicate function definitions: {duplicates}")
 
     required = {
-        "property": '#property version   "3.00"',
-        "heartbeat version": '\\"version\\":\\"3.00\\"',
+        "property": '#property version   "3.01"',
+        "heartbeat version": '\\"version\\":\\"3.01\\"',
         "heartbeat magic": '\\"magic\\":\\"%I64u\\"',
-        "strategy label": "SCOUT_PROVEN_LADDER",
-        "magic": "InpMagicNumber                    = 2207202630",
-        "previous magic": "InpLegacyMagicNumber               = 2207202611",
-        "persistent prefix": 'StringFormat("EMB300_%I64d_%I64u_"',
-        "initial comment": 'comment = "EVE3-INIT"',
-        "confirmation comment": 'comment = "EVE3-CONF"',
-        "ladder comment": 'string comment = "EVE3-LAD"',
+        "strategy label": "SCOUT_PROTECTED_LADDER",
+        "magic": "InpMagicNumber                    = 2207202631",
+        "previous magic": "InpLegacyMagicNumber               = 2207202630",
+        "persistent prefix": 'StringFormat("EMB301_%I64d_%I64u_"',
+        "initial comment": 'comment = "EVE32-INIT"',
+        "confirmation comment": 'comment = "EVE32-CONF"',
+        "ladder comment": 'string comment = "EVE32-LAD"',
         "directional scout input": "InpDirectionalScoutOnly",
         "profit lock": "MaintainProvisionalProfitLock",
         "stall exit": "MaintainScoutStallExit",
@@ -196,6 +196,10 @@ def main() -> int:
         "shared stop": "SynchronizeSharedBasketStop",
         "crossed stop watchdog": "DetectExecutionIntegrityBreach(tick);",
         "wide spread": "EntrySpreadSafe",
+        "broker legal boundary": "BrokerLegalProtectionBoundary",
+        "legal target clamp": "ResolveLegalProfitLockTarget",
+        "urgent scout exit": "StartUrgentScoutExit",
+        "protection request path": "ProtectionRequestAvailable",
     }
     for label, fragment in required.items(): require(text, fragment, label)
 
@@ -210,6 +214,22 @@ def main() -> int:
         require(provisional, fragment, f"provisional {fragment}")
     for forbidden in ("ProvisionalGuardPrice", "RESTORING OPPOSITE", "opposite stop remains"):
         if forbidden in provisional: fail(f"opposite reversal logic remains in scout campaign: {forbidden}")
+
+    if provisional.find("MaintainProvisionalProfitLock") > provisional.find("DeleteOneForProvisional"):
+        fail("Position 1 protection must run before pending-order cleanup")
+
+    manage = function_body(text, "ManageBasket")
+    if manage.find("MaintainProvisionalProfitLock") > manage.find("HandleLegacyPendingCleanup"):
+        fail("ManageBasket must protect Position 1 before legacy/pending cleanup")
+    urgent = function_body(text, "ContinueUrgentScoutExit")
+    require(urgent, "trade.PositionClose", "urgent direct position close")
+    if "CancelPendingOrders" in urgent:
+        fail("urgent scout close must not wait for pending-order cancellation")
+    lock = function_body(text, "MaintainProvisionalProfitLock")
+    for fragment in ("ResolveLegalProfitLockTarget", "POSITION 1 FALLBACK PROFIT LOCK ARMED", "BROKER REJECTED PROFIT PROTECTION", "StartUrgentScoutExit"):
+        require(lock, fragment, f"profit protection {fragment}")
+    if "TradeRequestAvailable()" in lock:
+        fail("profit protection must bypass pending-delete request locks")
 
     transaction = function_body(text, "OnTradeTransaction")
     require(transaction, "NO REVERSAL CAMPAIGNS ARE ALLOWED", "opposite fill closes instead of flips")
@@ -232,18 +252,18 @@ def main() -> int:
     server = SERVER.read_text(encoding="utf-8")
     app = APP.read_text(encoding="utf-8")
     package = PACKAGE.read_text(encoding="utf-8")
-    require(server, "version: '3.0.0'", "Railway version")
-    require(server, "DIRECTIONAL SCOUT + PROFIT-STALL BANKING + RE-ACCELERATION LADDER", "Railway mode")
+    require(server, "version: '3.0.1'", "Railway version")
+    require(server, "BROKER-LEGAL SCOUT PROFIT PROTECTION + RE-ACCELERATION LADDER", "Railway mode")
     require(server, "currentVersionRecords", "current-version performance filtering")
-    require(server, "CURRENT_EA_MAGIC = '2207202630'", "dashboard default current magic")
+    require(server, "CURRENT_EA_MAGIC = '2207202631'", "dashboard default current magic")
     for record_function in ("SendScan", "SendLegRecord", "SendOrderActivity", "SendBankDecision"):
         require(function_body(text, record_function), r'\"magic\":\"%I64u\"', f"{record_function} magic tag")
     require(app, "older bot data is excluded", "dashboard scope message")
-    require(package, '"version": "3.0.0"', "package version")
+    require(package, '"version": "3.0.1"', "package version")
 
     print(f"PASS: {SOURCE.name}")
     print(f"Functions: {len(names)} unique")
-    print("Verified: directional scout, no in-campaign reversal, dynamic profit lock, stall banking, re-acceleration confirmation, shared SL and current-version dashboard filtering")
+    print("Verified: broker-legal Position 1 SL clamp, protection-first execution ordering, immediate close fallback, directional scout, re-acceleration confirmation, shared SL and current-version dashboard filtering")
     print("NOTE: MetaEditor compilation is still required.")
     return 0
 

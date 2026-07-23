@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic strategy-model checks for v3.00."""
+"""Deterministic strategy and broker-protection checks for v3.01."""
 from __future__ import annotations
 
 
@@ -9,8 +9,19 @@ def directional_burst(side: str, v1: float, v3: float, acceleration: float, tick
 
 
 def protected_net(peak: float, minimum: float = .10, giveback_percent: float = 35.0) -> float | None:
-    if peak < .20: return None
+    if peak < .20:
+        return None
     return max(minimum, peak * (1 - giveback_percent / 100))
+
+
+def legal_lock(side: str, desired: float, bid: float, ask: float, distance: float, entry: float) -> float | None:
+    boundary = bid - distance if side == "BUY" else ask + distance
+    target = min(desired, boundary) if side == "BUY" else max(desired, boundary)
+    if side == "BUY" and target <= entry:
+        return None
+    if side == "SELL" and target >= entry:
+        return None
+    return target
 
 
 def reacceleration(side: str, peak: float, current_net: float, locked: bool, v1: float, v3: float, acceleration: float, ticks: float, micro_break: bool, m5: str) -> bool:
@@ -29,21 +40,21 @@ def main() -> None:
     assert abs(protected_net(.20) - .13) < 1e-9; checks += 1
     assert abs(protected_net(1.00) - .65) < 1e-9; checks += 1
 
+    # Desired BUY SL is too close to Bid; clamp farther away while keeping it profitable.
+    assert abs(legal_lock("BUY", 100.80, bid=100.90, ask=100.92, distance=.20, entry=100.00) - 100.70) < 1e-9; checks += 1
+    # Desired SELL SL is too close to Ask; clamp farther away while keeping it profitable.
+    assert abs(legal_lock("SELL", 99.20, bid=99.08, ask=99.10, distance=.20, entry=100.00) - 99.30) < 1e-9; checks += 1
+    # No legal profitable broker SL exists: the live EA must use immediate-close fallback.
+    assert legal_lock("BUY", 100.05, bid=100.10, ask=100.12, distance=.20, entry=100.00) is None; checks += 1
+    assert legal_lock("SELL", 99.95, bid=99.88, ask=99.90, distance=.20, entry=100.00) is None; checks += 1
+
     assert reacceleration("BUY", .80, .50, True, .03, .015, 1.2, 1.2, True, "BUY"); checks += 1
     assert not reacceleration("BUY", .40, .38, True, .03, .015, 1.2, 1.2, True, "BUY"); checks += 1
     assert not reacceleration("BUY", .80, .50, False, .03, .015, 1.2, 1.2, True, "BUY"); checks += 1
     assert not reacceleration("BUY", .80, .50, True, .01, .005, 1.2, 1.2, True, "BUY"); checks += 1
     assert not reacceleration("BUY", .80, .50, True, .03, .015, 1.2, 1.2, True, "SELL"); checks += 1
 
-    # Evidence encoded from the supplied v2.11 report: one-leg baskets had the edge;
-    # every multi-leg/reversal basket lost. This is the design reason for no opposite fill.
-    one_leg_net = 3.70
-    multi_leg_net = -8.52
-    assert one_leg_net > 0; checks += 1
-    assert multi_leg_net < 0; checks += 1
-    assert one_leg_net + multi_leg_net < 0; checks += 1
-
-    print(f"PASS: {checks} deterministic v3.00 checks")
+    print(f"PASS: {checks} deterministic v3.01 checks")
 
 
 if __name__ == "__main__":

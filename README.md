@@ -1,10 +1,12 @@
-# EVE MOMENTUM BURST v3.00
+# EVE MOMENTUM BURST v3.01
 
-Complete GitHub-ready replacement for v2.11.
+Complete GitHub-ready replacement for v3.00.
 
-## Why v3.00 exists
+## Why v3.01 exists
 
-The supplied v2.11 MT5 history was isolated by its `EVE31-*` comments. It contained 55 completed baskets and 70 positions.
+v3.00 detected the scout profit-lock condition, but a live IC Markets request was rejected as `invalid stops` while a pending-order cancellation was `frozen`. The EA then failed to choose a broker-legal fallback SL or close the profitable scout immediately. v3.01 fixes that exact execution path.
+
+The earlier supplied v2.11 MT5 history was isolated by its `EVE31-*` comments. It contained 55 completed baskets and 70 positions.
 
 The decisive finding was:
 
@@ -13,11 +15,11 @@ The decisive finding was:
 - none of the multi-position baskets won;
 - no completed `EVE31-LAD` position appeared in the report.
 
-The scout position showed an edge. Adding a second position too easily destroyed it. v3.00 therefore protects the scout first and permits extra size only after the move proves itself again.
+The scout position showed an edge. Adding a second position too easily destroyed it. v3.01 therefore protects the scout first and permits extra size only after the move proves itself again.
 
 See `docs/V2.11-REPORT-ANALYSIS.md` for the complete isolated breakdown.
 
-## v3.00 operating model
+## v3.01 operating model
 
 1. The EA watches live broker ticks continuously.
 2. M1 ATR defines what meaningful movement looks like.
@@ -55,6 +57,11 @@ These are EA inputs and can be changed later after a meaningful demo sample. The
 
 ## Execution safety
 
+- Position 1 profit protection runs before any pending-order cleanup, freeze wait or legacy cleanup.
+- The requested lock is clamped to the nearest broker-legal price using both stop-level and freeze-level distance plus a safety buffer.
+- If the desired lock is rejected, the EA retries once farther from price.
+- If no profitable legal SL is possible, or the broker rejects both SL attempts, the EA closes Position 1 first and cleans pending orders afterwards.
+- Frozen pending orders cannot block the urgent Position 1 close path.
 - Wide spread removes pending entries but leaves open positions protected.
 - BUY SL watchdog uses Bid.
 - SELL SL watchdog uses Ask.
@@ -63,20 +70,20 @@ These are EA inputs and can be changed later after a meaningful demo sample. The
 - A fill whose SL is already invalid closes the campaign.
 - Pending orders are cancelled before forced basket closure.
 - Only one confirmation or ladder pending order may survive.
-- v2.09, v2.10 and v2.11 orders are isolated from v3.00.
-- Railway performance is filtered to v3.00 magic `2207202630`; older dashboard records are excluded.
+- v2.09, v2.10 and v2.11 orders are isolated from v3.01.
+- Railway performance is filtered to v3.01 magic `2207202631`; older dashboard records are excluded.
 
 ## Version identity
 
-- EA version: `3.00`
-- Railway version: `3.0.0`
-- Magic number: `2207202630`
-- Order comments: `EVE3-INIT`, `EVE3-CONF`, `EVE3-LAD`
-- Persistent state prefix: `EMB300_*`
+- EA version: `3.01`
+- Railway version: `3.0.1`
+- Magic number: `2207202631`
+- Order comments: `EVE32-INIT`, `EVE32-CONF`, `EVE32-LAD`
+- Persistent state prefix: `EMB301_*`
 
 ## Package contents
 
-- `mt5/EVE_Momentum_Burst_EA_v3.00.mq5`
+- `mt5/EVE_Momentum_Burst_EA_v3.01.mq5`
 - `railway/`
 - `supabase/schema.sql`
 - `docs/`

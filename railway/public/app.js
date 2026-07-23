@@ -30,7 +30,7 @@ function operationalReason(ea, control) {
   if (ea.connectionStatus !== 'CONNECTED') return 'MARKET CLOSED OR NO FRESH MT5 HEARTBEAT — old scan values are ignored.';
   if (!control.autonomous || !ea.autonomous) return 'AUTONOMOUS OFF — no new price-trigger orders will be placed.';
   if (ea.emergency) return 'EMERGENCY STOP ACTIVE.';
-  if (String(ea.engineState || '').includes('LEGACY') || String(ea.lastEvent || '').includes('previous EVE')) return ea.lastEvent || 'Removing recognised older EVE orders before v3.00 starts.';
+  if (String(ea.engineState || '').includes('LEGACY') || String(ea.lastEvent || '').includes('previous EVE')) return ea.lastEvent || 'Removing recognised older EVE orders before v3.01 starts.';
   if (ea.closePending) return ea.closeReason || 'Broker-side protection triggered — clearing the full campaign.';
   if (Number(ea.positionCount || 0) > 0) {
     if (String(ea.campaignPhase || '').includes('SCOUT') || String(ea.engineState || '').includes('SCOUT')) return `DIRECTIONAL SCOUT — ${ea.scoutProofState || 'protecting profit and waiting for re-acceleration proof'}. No opposite reversal trade is allowed.`;
