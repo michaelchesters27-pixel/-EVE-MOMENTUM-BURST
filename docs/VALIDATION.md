@@ -1,18 +1,23 @@
-# Validation record — v2.09
+# Validation record — v2.10
 
 Automated checks in this package verify:
 
-- EA property, heartbeat and Railway version `2.09` / `2.0.9`;
-- v2.09 magic `2207202609` and v2.08 isolation magic `2207202608`;
-- new `EVE29-*` order comments and `EMB209_*` persistent state prefix;
-- wrong-sequence fill protection;
+- EA property and heartbeat version `2.10`, Railway version `2.0.10`;
+- v2.10 magic `2207202610` and v2.09 isolation magic `2207202609`;
+- `EVE30-*` order comments and `EMB210_*` persistent-state prefix;
+- one campaign attempt per M1 candle and no timed strategy cooldown;
+- Position 1 profit-lock trigger, minimum lock and 50% giveback calculation;
+- no fixed TP;
+- second-fill progression protection;
+- pre-arming existing positions before Position 2 or the next ladder order is placed;
+- exactly one future same-direction ladder order;
+- shared basket-profit calculation and cost reserve;
+- exact broker-side shared SL synchronisation;
 - Bid/Ask crossed-SL watchdogs;
-- shared basket-profit calculation and commission reserve;
-- newest-position-first SL synchronisation;
-- one identical SL across all same-direction positions;
-- no new ladder construction before shared-SL synchronisation;
+- abnormal-spread pending-entry quarantine;
 - pending-order quarantine before forced position closure;
 - safe two-sided candle refresh;
-- no strategy cooldown, position gate, total-lot gate or session gate.
+- no analytics-score dependency in operational trading functions;
+- no session, position-count or total-lot strategy gate.
 
-MetaEditor compilation cannot be performed by the included Python validators and remains mandatory.
+The Python validators cannot compile MQL5. MetaEditor compilation with **0 errors** remains mandatory.

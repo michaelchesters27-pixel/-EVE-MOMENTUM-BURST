@@ -1,14 +1,17 @@
-EVE MOMENTUM BURST v2.09 — COMPLETE REPLACEMENT
+EVE MOMENTUM BURST v2.10 — COMPLETE REPLACEMENT
 
 1. Keep Algo Trading OFF.
-2. Close all v2.08 open positions.
-3. Delete all remaining v2.08 pending orders.
+2. Close every open v2.09 EVE position.
+3. Delete every remaining v2.09 EVE pending order.
 4. Replace the complete GitHub repository with this package.
-5. Wait for Railway to redeploy v2.0.9.
-6. Compile mt5/EVE_Momentum_Burst_EA_v2.09.mq5 with 0 errors.
-7. Remove v2.08 from the chart.
-8. Attach v2.09 to XAUUSD M1.
-9. Enter the Railway URL and bot token.
+5. Wait for Railway to redeploy v2.0.10.
+6. Compile mt5/EVE_Momentum_Burst_EA_v2.10.mq5 with 0 errors.
+7. Remove v2.09 from the chart.
+8. Attach v2.10 to XAUUSD M1.
+9. Enter the same Railway URL and bot token.
 10. Turn Algo Trading ON.
-11. Confirm both flat pending stops and an updating v2.09 heartbeat.
-12. After the second same-side fill, confirm every open position has the exact same SL.
+11. Confirm the dashboard reports EA 2.10 and both flat-state pending stops appear.
+12. Confirm a finished campaign does not restart until the next M1 candle.
+13. Confirm Position 1 moves its SL into profit after reaching the configured profit-lock trigger.
+14. Confirm Position 2 is not placed until Position 1 already carries Position 2's exact planned SL.
+15. After confirmation, confirm only one future ladder pending order exists.

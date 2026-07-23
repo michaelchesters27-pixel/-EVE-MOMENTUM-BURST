@@ -3,16 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EVE Momentum Burst v2.09</title>
+  <title>EVE Momentum Burst v2.10</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 <main class="wrap">
   <header class="hero">
     <div>
-      <p class="eyebrow">XAUUSD • M1 • EVERY-CANDLE STRADDLE • PROFIT-LOCK STOP LADDER</p>
+      <p class="eyebrow">XAUUSD • M1 • ONE CAMPAIGN ATTEMPT PER CANDLE • PRE-ARMED SHARED SL</p>
       <h1>EVE MOMENTUM BURST</h1>
-      <p class="subtitle">Every candle keeps a BUY STOP and SELL STOP. The second same-side fill confirms only when it progresses correctly. After the second same-side fill confirms direction, every open position is moved to one shared broker-side basket SL. The ladder then replenishes continuously.</p>
+      <p class="subtitle">Each eligible M1 candle gets one BUY STOP and one SELL STOP. Position 1 protects half of its best profit once the lock activates. Before Position 2 or any later ladder order is armed, every existing position already carries the exact same broker-side SL. Only one future ladder stop is allowed at a time.</p>
     </div>
     <span id="systemBadge" class="badge neutral">CONNECTING</span>
   </header>
@@ -63,7 +63,7 @@
       <label><span>Equity for each 0.01 lot</span><input id="equityPer001Lot" type="number" min="10" step="10"></label>
     </div>
     <div class="buttons"><button id="applySettings" class="positive">Apply lot settings</button></div>
-    <p id="operatingModeNotice" class="notice">24/5 price-trigger engine: scores are display-only. No session gate, position-count gate, total-lot gate, campaign timer or post-campaign cooldown. Execution-integrity guards reject wrong-sequence fills, synchronise one SL across the basket, detect crossed SLs and quarantine pending orders before basket closure.</p>
+    <p id="operatingModeNotice" class="notice">24/5 price-trigger engine: scores are display-only. One campaign attempt is allowed per M1 candle, with no timed cooldown or session gate. Wide-spread safety temporarily removes pending entries while open positions retain their broker-side SL. Position 1 uses a profit lock, and only one pre-armed ladder stop is allowed ahead.</p>
   </section>
 
   <section class="two-col">
@@ -75,13 +75,13 @@
         <div><span>Positions / pending</span><strong id="positionCounts">0 / 0</strong></div>
         <div><span>Total lots</span><strong id="totalLots">0.00</strong></div>
         <div><span>Average entry</span><strong id="averageEntry">—</strong></div>
-        <div><span>Shared basket SL</span><strong id="protectedStop">—</strong></div>
+        <div><span>Protected / shared SL</span><strong id="protectedStop">—</strong></div>
         <div><span>Peak basket profit</span><strong id="peakProfit">$0.00</strong></div>
         <div><span>Worst floating P/L</span><strong id="basketMae">$0.00</strong></div>
         <div><span>Newest ticket</span><strong id="newestTicket">—</strong></div>
         <div><span>Newest current / peak</span><strong id="newestProfit">—</strong></div>
         <div><span>Newest age</span><strong id="newestAge">—</strong></div>
-        <div><span>Shared-SL basket exit</span><strong id="bankCandidate">NO</strong></div>
+        <div><span>Broker-side exit protection</span><strong id="bankCandidate">NO</strong></div>
       </div>
       <div id="bankReason" class="notice">Waiting for a triggered position.</div>
       <div id="closeInfo" class="notice">No close pending.</div>

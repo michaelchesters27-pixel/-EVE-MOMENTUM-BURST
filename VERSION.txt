@@ -1,7 +1,8 @@
-EVE Momentum Burst v2.0.9
-EXECUTION-GUARDED EVERY-CANDLE STRADDLE + SECOND-TRIGGER CONFIRMATION + SHARED BASKET SL
+EVE Momentum Burst v2.0.10
+ONE M1 ATTEMPT + POSITION 1 PROFIT LOCK + ONE PRE-ARMED LADDER STOP
 
-MT5 file: mt5/EVE_Momentum_Burst_EA_v2.09.mq5
+MT5 file: mt5/EVE_Momentum_Burst_EA_v2.10.mq5
 Railway root: railway
-Magic: 2207202609
-Previous magic isolated/cleaned: 2207202608
+Magic: 2207202610
+Previous magic isolated/cleaned: 2207202609
+Order comments: EVE30-INIT / EVE30-CONF / EVE30-LAD

@@ -30,13 +30,15 @@ function operationalReason(ea, control) {
   if (ea.connectionStatus !== 'CONNECTED') return 'MARKET CLOSED OR NO FRESH MT5 HEARTBEAT — old scan values are ignored.';
   if (!control.autonomous || !ea.autonomous) return 'AUTONOMOUS OFF — no new price-trigger orders will be placed.';
   if (ea.emergency) return 'EMERGENCY STOP ACTIVE.';
-  if (String(ea.engineState || '').includes('LEGACY') || String(ea.lastEvent || '').includes('previous EVE')) return ea.lastEvent || 'Removing v2.08 EVE orders before v2.09 starts.';
-  if (ea.closePending) return ea.closeReason || 'Shared basket SL triggered — clearing the full campaign.';
+  if (String(ea.engineState || '').includes('LEGACY') || String(ea.lastEvent || '').includes('previous EVE')) return ea.lastEvent || 'Removing v2.09 EVE orders before v2.10 starts.';
+  if (ea.closePending) return ea.closeReason || 'Broker-side protection triggered — clearing the full campaign.';
   if (Number(ea.positionCount || 0) > 0) {
-    if (String(ea.campaignPhase || '').includes('OCO') || String(ea.engineState || '').includes('PROVISIONAL')) return 'FIRST TRIGGER PROVISIONAL — the opposite stop remains until the second same-side trigger.';
-    return `ACTIVE ${ea.campaignCurrentSide || ea.side || ''} LADDER — every open position is protected by the same basket SL.`;
+    if (String(ea.campaignPhase || '').includes('OCO') || String(ea.engineState || '').includes('PROVISIONAL')) return 'POSITION 1 PROVISIONAL — its profit lock is active when earned; Position 2 is not armed until Position 1 already has the exact planned shared SL.';
+    return `ACTIVE ${ea.campaignCurrentSide || ea.side || ''} LADDER — every open position shares one SL and only one future stop is allowed ahead.`;
   }
-  if (Number(ea.bracketBuyPrice || 0) > 0 && Number(ea.bracketSellPrice || 0) > 0) return 'PRICE ENGINE ARMED — BUY STOP and SELL STOP are live. Scores do not control either order.';
+  if (String(ea.campaignPhase || '').includes('WAIT NEXT')) return 'ONE CAMPAIGN ATTEMPT HAS FINISHED — waiting only for the next M1 candle.';
+  if (String(ea.engineState || '').includes('WIDE SPREAD')) return ea.bracketState || 'WIDE SPREAD SAFETY — pending entries are temporarily removed.';
+  if (Number(ea.bracketBuyPrice || 0) > 0 && Number(ea.bracketSellPrice || 0) > 0) return 'PRICE ENGINE ARMED — one BUY STOP and one SELL STOP are live for this M1 candle. Scores do not control them.';
   return 'WAITING FOR THE BROKER MARKET TO OPEN AND A FRESH TICK — scores do not control the bracket.';
 }
 
@@ -65,7 +67,7 @@ function render(payload) {
   text('basketTitle', ea.positionCount ? `${ea.side} LADDER` : 'NONE'); text('basketState', ea.closePending ? 'CLOSE PENDING' : ea.positionCount ? 'ACTIVE' : 'IDLE');
   setMoney('floatingProfit', ea.floatingProfit); text('positionCounts', `${ea.positionCount || 0} / ${ea.pendingCount || 0}`); text('totalLots', number(ea.totalLots,2)); text('averageEntry', Number(ea.averageEntry)>0 ? number(ea.averageEntry,2) : '—'); text('protectedStop', Number(ea.protectedStop)>0 ? number(ea.protectedStop,2) : '—');
   setMoney('peakProfit', ea.peakBasketProfit); setMoney('basketMae', ea.basketMae); text('newestTicket', ea.newestTicket || '—'); text('newestProfit', `${money(ea.newestLegProfit)} / ${money(ea.newestLegPeak)}`); text('newestAge', seconds(ea.newestLegAgeSeconds));
-  text('bankCandidate', ea.bankCandidate ? 'YES' : 'NO'); $('bankCandidate').className = ea.bankCandidate ? 'warn-text' : 'good-text'; text('bankReason', ea.bankReason || 'Every open position receives the same broker-side basket SL.'); text('closeInfo', ea.closePending ? `${ea.closeReason || 'Close pending'} • attempts ${ea.closeAttempts || 0}` : 'No close pending.');
+  text('bankCandidate', ea.bankCandidate ? 'YES' : 'NO'); $('bankCandidate').className = ea.bankCandidate ? 'warn-text' : 'good-text'; text('bankReason', ea.bankReason || 'Position 1 uses a profit lock; confirmed positions share one pre-armed broker-side SL.'); text('closeInfo', ea.closePending ? `${ea.closeReason || 'Close pending'} • attempts ${ea.closeAttempts || 0}` : 'No close pending.');
   setMoney('balance', ea.balance); setMoney('equity', ea.equity); setMoney('dailyPnl', ea.dailyPnl); text('basketsToday', ea.basketsToday ?? '—'); text('lossStreak', `${ea.consecutiveLosses ?? '—'} • TRACKING ONLY`); text('algo', ea.algoAllowed ? 'ALLOWED' : 'BLOCKED'); $('algo').className = ea.algoAllowed ? 'good-text' : 'bad-text'; text('spread', `${number(ea.spreadPoints,1)} pts`); text('extension', `${number(ea.extensionAtr,2)} ATR`); text('lastEvent', ea.lastEvent || 'Waiting');
   const s = performance.summary || {};
   text('statBaskets', s.baskets || 0); text('statLegs', s.totalLegs || 0); text('statWinRate', `${number(s.winRate,1)}%`); setMoney('statNet', s.netProfit); text('statPf', s.profitFactor >= 999 ? '∞' : number(s.profitFactor,2)); setMoney('statAvg', s.averageBasket); text('statDuration', seconds(s.averageDurationSeconds)); setMoney('statBest', s.bestBasket); setMoney('statWorst', s.worstBasket); setMoney('statGiveback', s.averageGiveback); setMoney('statDrawdown', s.averageMaxDrawdown); setMoney('statPeak', s.peakFloatingProfit);
