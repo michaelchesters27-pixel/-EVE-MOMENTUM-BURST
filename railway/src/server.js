@@ -12,7 +12,7 @@ const SUPABASE_URL = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SUPABASE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 const EA_DELAYED_MS = 45_000;
 const EA_OFFLINE_MS = 120_000;
-const CURRENT_EA_MAGIC = '2207202631';
+const CURRENT_EA_MAGIC = '2207202632';
 const MAX = { scans: 40_000, baskets: 5_000, legs: 30_000, orders: 30_000, banks: 10_000, events: 5_000 };
 
 export const nowIso = () => new Date().toISOString();
@@ -87,7 +87,7 @@ export function validateSettings(input = {}, current = DEFAULT_SETTINGS) {
 let settings = validateSettings(loadJson(files.settings, DEFAULT_SETTINGS));
 
 const state = {
-  version: '3.0.1', service: 'EVE MOMENTUM BURST', mode: 'BROKER-LEGAL SCOUT PROFIT PROTECTION + RE-ACCELERATION LADDER', startedAt: nowIso(),
+  version: '3.0.2', service: 'EVE MOMENTUM BURST', mode: 'DETERMINISTIC STATE MACHINE + WRONG-SIDE ORDER RECOVERY', startedAt: nowIso(),
   control: { autonomous: String(process.env.AUTO_ENABLED || 'true').toLowerCase() !== 'false', emergency: false, manualNewsLock: false },
   command: { id: 0, action: 'NONE', createdAt: nowIso(), consumedAt: null, result: null },
   ea: {
@@ -95,7 +95,7 @@ const state = {
     balance: null, equity: null, margin: null, freeMargin: null, marginLevel: null,
     bid: null, ask: null, spreadPoints: null, medianSpreadPoints: null,
     terminalConnected: false, algoAllowed: false, autonomous: false, emergency: false,
-    engineState: 'WARMING', bracketState: 'NONE', campaignPhase: 'FLAT', campaignStartSide: 'NONE', campaignCurrentSide: 'NONE', campaignInvalidationPrice: 0, campaignBuyLegs: 0, campaignSellLegs: 0, campaignReversalCount: 0, telemetryQueueDepth: 0, bracketBuyPrice: 0, bracketSellPrice: 0,
+    engineState: 'WARMING', supervisorState: 'BOOT', supervisorFault: false, supervisorReason: 'Waiting for EA', bracketState: 'NONE', campaignPhase: 'FLAT', campaignStartSide: 'NONE', campaignCurrentSide: 'NONE', campaignInvalidationPrice: 0, campaignBuyLegs: 0, campaignSellLegs: 0, campaignReversalCount: 0, telemetryQueueDepth: 0, bracketBuyPrice: 0, bracketSellPrice: 0,
     positionOpen: false, positionCount: 0, pendingCount: 0, side: 'NONE', totalLots: 0,
     averageEntry: null, currentPrice: null, protectedStop: null, floatingProfit: 0, peakBasketProfit: 0, basketMae: 0,
     basketStartedAt: null, positionsOpened: 0, maxConcurrentPositions: 0,

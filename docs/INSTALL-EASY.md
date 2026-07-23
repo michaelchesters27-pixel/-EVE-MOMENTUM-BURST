@@ -1,23 +1,12 @@
-# Easy installation — v3.01
+# Easy installation — v3.02
 
-1. Keep MT5 **Algo Trading OFF**.
-2. Close every remaining older EVE position.
-3. Delete every remaining older EVE pending order.
-4. Replace the complete GitHub repository with this package.
-5. Wait for Railway to deploy version `3.0.1`.
-6. Copy `mt5/EVE_Momentum_Burst_EA_v3.01.mq5` into `MQL5/Experts`.
-7. Open it in MetaEditor and compile it with **0 errors**.
-8. Remove the older EA from the XAUUSD chart.
-9. Attach v3.01 to **XAUUSD M1**.
-10. Enter the Railway URL and bot token.
-11. Turn Algo Trading ON.
-12. Allow at least 30 seconds for the live tick buffer to warm.
-13. Confirm the chart and dashboard report EA `3.01` and magic `2207202631`.
-
-## What is normal
-
-While price is quiet, **zero pending orders is correct**.
-
-When a genuine BUY burst appears, expect one BUY STOP only. When a genuine SELL burst appears, expect one SELL STOP only.
-
-After the scout opens, expect all other pending orders to disappear. Position 2 should not appear unless the scout is already protected in profit and a new same-direction acceleration is detected.
+1. Turn Algo Trading OFF.
+2. Close/delete all older EVE exposure.
+3. Replace the complete GitHub repository with this package.
+4. Wait for Railway version `3.0.2`.
+5. Copy `mt5/EVE_Momentum_Burst_EA_v3.02.mq5` to `MQL5/Experts`.
+6. Open it in MetaEditor and compile with 0 errors.
+7. Remove the previous EA from XAUUSD M1.
+8. Attach v3.02, enter Railway URL/token and press OK.
+9. Turn Algo Trading ON.
+10. Confirm EA `3.02`, magic `2207202632`, and supervisor state on the dashboard.

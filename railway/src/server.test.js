@@ -36,7 +36,7 @@ test('server constructs', () => {
 test('current EA magic excludes older bot records', () => {
   const records = [
     { id: 'old', magic: '2207202630', netProfit: 99 },
-    { id: 'current', magic: '2207202631', netProfit: 1.25 },
+    { id: 'current', magic: '2207202632', netProfit: 1.25 },
     { id: 'missing', netProfit: 5 }
   ];
   assert.deepEqual(filterRecordsByMagic(records).map(item => item.id), ['current']);

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic strategy and broker-protection checks for v3.01."""
+"""Deterministic strategy and broker-protection checks for v3.02."""
 from __future__ import annotations
 
 
@@ -29,6 +29,29 @@ def reacceleration(side: str, peak: float, current_net: float, locked: bool, v1:
     return peak >= .60 and current_net >= .35 and locked and direction and acceleration >= 1.05 and ticks >= 1.05 and micro_break and m5 != ("SELL" if side == "BUY" else "BUY")
 
 
+
+def pending_relation(side: str, price: float, bid: float, ask: float, freeze: float, buffer: float) -> str:
+    wrong = price <= ask if side == "BUY" else price >= bid
+    if wrong:
+        return "WRONG_SIDE"
+    gap = price - ask if side == "BUY" else bid - price
+    return "IN_FREEZE" if gap <= freeze + buffer else "VALID_AHEAD"
+
+
+
+def recovery_decision(latched: bool, positions: int, pending: int) -> str:
+    if not latched:
+        return "NORMAL"
+    if positions > 0:
+        return "CLOSE_EXPOSURE"
+    if pending > 0:
+        return "RETRY_DELETE"
+    return "CLEAR_RECOVERY"
+
+def first_fill_safe(side: str, planned: float, filled: float, allowed: float) -> bool:
+    adverse = filled - planned if side == "BUY" else planned - filled
+    return adverse <= allowed + 1e-12
+
 def main() -> None:
     checks = 0
     assert directional_burst("BUY", .04, .02, 1.5, 1.3, True); checks += 1
@@ -54,7 +77,24 @@ def main() -> None:
     assert not reacceleration("BUY", .80, .50, True, .01, .005, 1.2, 1.2, True, "BUY"); checks += 1
     assert not reacceleration("BUY", .80, .50, True, .03, .015, 1.2, 1.2, True, "SELL"); checks += 1
 
-    print(f"PASS: {checks} deterministic v3.01 checks")
+    # A crossed SELL STOP must be classified as wrong-side, never as permanently frozen.
+    assert pending_relation("SELL", 4051.92, bid=4043.24, ask=4043.33, freeze=.20, buffer=.10) == "WRONG_SIDE"; checks += 1
+    assert pending_relation("BUY", 4040.00, bid=4043.24, ask=4043.33, freeze=.20, buffer=.10) == "WRONG_SIDE"; checks += 1
+    assert pending_relation("SELL", 4043.10, bid=4043.24, ask=4043.33, freeze=.10, buffer=.05) == "IN_FREEZE"; checks += 1
+    assert pending_relation("SELL", 4042.50, bid=4043.24, ask=4043.33, freeze=.10, buffer=.05) == "VALID_AHEAD"; checks += 1
+
+    assert first_fill_safe("BUY", 100.00, 100.20, .30); checks += 1
+    assert not first_fill_safe("BUY", 100.00, 100.50, .30); checks += 1
+    assert first_fill_safe("SELL", 100.00, 99.80, .30); checks += 1
+    assert not first_fill_safe("SELL", 100.00, 99.50, .30); checks += 1
+
+    # Once recovery is latched, a failed deletion is retried even if price later returns
+    # to the valid side; exposure closes, and only a genuinely flat/order-free state clears it.
+    assert recovery_decision(True, 0, 1) == "RETRY_DELETE"; checks += 1
+    assert recovery_decision(True, 1, 0) == "CLOSE_EXPOSURE"; checks += 1
+    assert recovery_decision(True, 0, 0) == "CLEAR_RECOVERY"; checks += 1
+
+    print(f"PASS: {checks} deterministic v3.02 checks")
 
 
 if __name__ == "__main__":

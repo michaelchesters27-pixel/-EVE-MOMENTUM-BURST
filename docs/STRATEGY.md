@@ -1,100 +1,45 @@
-# Strategy specification — v3.01
+# Strategy specification — v3.02
 
-## 1. Market observation
+## 1. Detection
 
-- Execution is tick-by-tick.
-- M1 ATR measures current volatility.
-- M5 supplies a soft directional bias.
-- A candle opening does not create a trade attempt.
-- Analytics scores are displayed but never gate an order.
+The EA watches live ticks. M1 ATR defines normal movement and M5 supplies a soft directional bias. Analytics scores are display-only.
 
-## 2. Directional burst arming
+A directional burst requires same-direction 1-second and 3-second velocity, acceleration, tick-rate expansion, a micro-breakout and acceptable spread.
 
-While flat, the EA normally has no pending orders.
+## 2. Directional scout
 
-A directional scout is armed only when the same direction passes all live tests:
+A BUY burst places one BUY STOP. A SELL burst places one SELL STOP. No opposite order is placed, and the legacy setting cannot re-enable a two-sided bracket.
 
-- 1-second ATR-normalised velocity;
-- 3-second velocity in the same direction;
-- acceleration of 1-second speed versus 3-second speed;
-- expanding tick-arrival rate;
-- a fresh micro-range breakout;
-- acceptable spread.
+The pending order expires server-side when supported. If it becomes stale, wrong-side, duplicated, stuck in a request state or inconsistent with the live positions, the execution supervisor enters recovery and removes it.
 
-A counter-M5 burst is allowed only if it is stronger by the configured multiplier.
+## 3. Scout management
 
-Default mode places one order only:
+The first fill is the scout. It receives a real broker-side SL and no fixed TP.
 
-- BUY burst → BUY STOP;
-- SELL burst → SELL STOP.
+After the configured profit trigger, the EA dynamically protects profit. Protection runs before any pending-order cleanup. If the broker cannot accept a profitable legal SL, the scout is closed.
 
-If it does not trigger within the burst lifetime, it is removed. A fresh scout cannot arm until the market first quietens and then produces a new burst.
+## 4. Confirmation and ladder
 
-## 3. Scout position
+Position 2 requires protected scout profit and fresh same-direction re-acceleration. Once confirmed, every position shares one broker-side SL and only one future ladder order can exist.
 
-The first fill is the scout. All other EVE pending orders are cancelled.
+A later BUY fill must be higher than the previous BUY trigger. A later SELL fill must be lower than the previous SELL trigger.
 
-The scout:
+## 5. Strict state machine
 
-- has a real broker-side initial SL;
-- has no fixed TP;
-- never flips into an opposite campaign;
-- starts dynamically locking profit after its peak reaches the configured trigger;
-- can be banked when momentum stalls while useful net profit remains.
+The supervisor reconstructs state from MT5 every pass:
 
-For a BUY scout, live support means positive 1-second and 3-second velocity. For a SELL scout, both must remain negative. If support disappears for the configured confirmation period after a useful peak, the basket is closed to bank the remaining profit.
+- `IDLE`: no positions, no pending order.
+- `ARMED`: no position, one valid initial pending order.
+- `SCOUT`: one position, zero or one valid same-side confirmation order.
+- `CONFIRMED`: two or more same-side positions, zero or one valid same-side ladder order.
+- `EXITING`: campaign close is active.
+- `RECOVERY`: an order invariant has failed and new entries are blocked.
+- `FAULT`: mixed positions or a recovery order has produced exposure; the basket is closed.
 
-## 4. Position 2 proof
+A BUY STOP at or below Ask is wrong-side. A SELL STOP at or above Bid is wrong-side. Wrong-side orders are not treated as frozen. Once recovery starts, it remains latched and keeps removing the ticket even if price later returns to the valid side.
 
-Position 2 is not placed simply because price moved a fixed distance.
+## 6. Exit
 
-The scout must first prove itself through:
+The scout can close by initial SL, protected SL, momentum-stall bank, execution-integrity protection or manual/emergency close.
 
-- minimum peak profit;
-- minimum retained estimated net profit;
-- an active broker-side profit lock;
-- same-direction 1-second and 3-second re-acceleration;
-- sufficient acceleration ratio;
-- sufficient tick-rate expansion;
-- a fresh same-direction micro-break;
-- no directly opposite M5 bias.
-
-The confirmation order expires quickly if the proof fades. The scout remains protected and can still bank on a momentum stall.
-
-## 5. Confirmed ladder
-
-When Position 2 genuinely fills farther in the correct direction:
-
-- the campaign becomes confirmed;
-- every open position is synchronised to one shared broker-side SL;
-- only one future ladder stop may exist;
-- the basket must already meet the minimum profit requirement;
-- each new order requires a fresh re-acceleration signal.
-
-A later BUY fill must be above the previous BUY trigger. A later SELL fill must be below the previous SELL trigger. Any non-progressing fill is an execution-integrity breach and the full basket is closed.
-
-## 6. Exit logic
-
-### Scout exits
-
-The scout can finish through:
-
-- its initial SL;
-- its dynamic profit-lock SL;
-- a direct EA bank when useful profit remains but momentum has stalled;
-- execution-integrity protection;
-- manual close, pause handling or emergency stop.
-
-### Confirmed basket exits
-
-All positions share one broker-side SL. If any shared SL is reported as hit, or live Bid/Ask crosses the stop while the broker leaves a position open, the EA cancels pending entries and clears the full basket.
-
-There is no fixed TP, score gate, session gate, campaign-duration gate, maximum-position strategy gate or total-lot strategy gate.
-
-## 7. No in-campaign reversal
-
-v3.01 never treats an opposite fill as a new campaign direction. A mixed BUY/SELL state is considered unsafe and causes the entire campaign to be closed.
-
-## Broker-rejected profit-lock handling
-
-Position 1 protection has absolute execution priority. The EA calculates the desired profit SL, clamps it to the nearest legal level using the broker stop level, freeze level, tick size and an extra buffer, and submits that legal price. If the broker rejects it, the EA recalculates once farther away. If that is also rejected, or no legal profitable SL exists, the EA closes Position 1 before trying to clean any pending order. Frozen pending orders cannot block this path.
+A confirmed basket exits through the shared SL or a full-basket execution-integrity close.

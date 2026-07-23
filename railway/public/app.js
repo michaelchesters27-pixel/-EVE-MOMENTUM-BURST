@@ -30,7 +30,7 @@ function operationalReason(ea, control) {
   if (ea.connectionStatus !== 'CONNECTED') return 'MARKET CLOSED OR NO FRESH MT5 HEARTBEAT — old scan values are ignored.';
   if (!control.autonomous || !ea.autonomous) return 'AUTONOMOUS OFF — no new price-trigger orders will be placed.';
   if (ea.emergency) return 'EMERGENCY STOP ACTIVE.';
-  if (String(ea.engineState || '').includes('LEGACY') || String(ea.lastEvent || '').includes('previous EVE')) return ea.lastEvent || 'Removing recognised older EVE orders before v3.01 starts.';
+  if (String(ea.engineState || '').includes('LEGACY') || String(ea.lastEvent || '').includes('previous EVE')) return ea.lastEvent || 'Removing recognised older EVE orders before v3.02 starts.';
   if (ea.closePending) return ea.closeReason || 'Broker-side protection triggered — clearing the full campaign.';
   if (Number(ea.positionCount || 0) > 0) {
     if (String(ea.campaignPhase || '').includes('SCOUT') || String(ea.engineState || '').includes('SCOUT')) return `DIRECTIONAL SCOUT — ${ea.scoutProofState || 'protecting profit and waiting for re-acceleration proof'}. No opposite reversal trade is allowed.`;
@@ -56,7 +56,7 @@ function render(payload) {
   text('railway','ONLINE'); text('version',`v${state.version} • ${state.mode}`);
   const connectionLabel = ea.connectionStatus === 'DELAYED' && ea.terminalConnected ? 'TELEMETRY DELAYED' : (ea.connectionStatus || 'OFFLINE'); text('eaStatus', connectionLabel); $('eaStatus').className = ea.connectionStatus === 'CONNECTED' ? 'good-text' : ea.connectionStatus === 'DELAYED' ? 'warn-text' : 'bad-text';
   text('eaDetail', ea.account ? `${ea.account} • ${ea.symbol} • EA ${ea.version || '—'} • ${ea.strategy || '—'}` : 'No heartbeat');
-  text('engineState', ea.campaignPhase || ea.engineState || '—'); text('engineDetail', `${ea.lastEvent || 'Waiting'}${ea.campaignStartSide && ea.campaignStartSide !== 'NONE' ? ` • ${ea.campaignStartSide}→${ea.campaignCurrentSide || ea.side || 'NONE'} • ${ea.campaignBuyLegs || 0} BUY/${ea.campaignSellLegs || 0} SELL` : ''}`);
+  text('engineState', ea.supervisorState || ea.campaignPhase || ea.engineState || '—'); text('engineDetail', `${ea.supervisorFault ? 'FAULT • ' : ''}${ea.supervisorReason || ea.lastEvent || 'Waiting'}${ea.campaignStartSide && ea.campaignStartSide !== 'NONE' ? ` • ${ea.campaignStartSide}→${ea.campaignCurrentSide || ea.side || 'NONE'} • ${ea.campaignBuyLegs || 0} BUY/${ea.campaignSellLegs || 0} SELL` : ''}`);
   text('momentumState', ea.momentumState || '—'); text('momentumDetail', `DISPLAY ONLY • ${ea.buyScore || 0}/11 BUY • ${ea.sellScore || 0}/11 SELL`);
   text('autoTitle', `AUTONOMOUS ${control.autonomous ? 'ON' : 'OFF'}`); $('autoTitle').className = control.autonomous ? 'good-text' : 'bad-text';
   text('scanTime', ea.lastSeenAt ? `Heartbeat: ${when(ea.lastSeenAt)}` : 'No current heartbeat');

@@ -1,68 +1,79 @@
-# Demo testing procedure — v3.01
+# Demo testing procedure — v3.02
 
-## Clean deployment
+## Installation proof
 
-1. Keep Algo Trading off.
-2. Close/delete all v2.09, v2.10 and v2.11 positions and pending orders.
-3. Replace the full GitHub repository.
-4. Compile `mt5/EVE_Momentum_Burst_EA_v3.01.mq5` in MetaEditor with 0 errors.
-5. Attach it to XAUUSD M1 on the IC Markets demo account.
-6. Turn Algo Trading on.
-7. Allow at least 30 seconds for live-tick warmup.
+1. Keep Algo Trading OFF.
+2. Remove all old EVE positions and pending orders.
+3. Compile `mt5/EVE_Momentum_Burst_EA_v3.02.mq5` with 0 errors.
+4. Attach v3.02 to XAUUSD M1.
+5. Confirm chart/dashboard version `3.02`, Railway `3.0.2`, magic `2207202632`.
+6. Turn Algo Trading ON.
 
-## Flat-state test
+## Mandatory live-state tests
 
-Confirm:
+### A. Flat state
 
-- the EA normally shows `WATCHING LIVE TICKS`;
-- no pending order exists during quiet price action;
-- a BUY burst creates one BUY STOP only;
-- a SELL burst creates one SELL STOP only;
-- an untriggered scout expires and is removed;
-- the engine waits for a quiet reset before arming again.
+Expected:
 
-## Scout test
+- Supervisor: `IDLE` while no burst exists.
+- Positions: 0.
+- Pending: 0.
 
-After the first position triggers, confirm:
+### B. Armed state
 
-- no opposite pending order remains;
-- Position 1 has a real broker-side SL;
-- after useful profit, the SL moves into profit and continues to improve as peak profit increases;
-- when live support stalls after useful profit, the EA banks the position;
-- the dashboard describes the scout proof state.
+When a burst arms a scout:
 
-## Position 2 test
+- Supervisor: `ARMED`.
+- Exactly one pending order.
+- BUY STOP must be above Ask.
+- SELL STOP must be below Bid.
+- Order role/comment must be `EVE33-INIT`.
 
-Position 2 must not be armed until:
+### C. Wrong-side recovery
 
-- scout peak is at least the configured proof threshold;
-- current estimated net profit remains above its threshold;
-- the scout SL is already in profit;
-- same-direction live velocity and acceleration return;
-- tick-rate expansion and a fresh micro-break confirm continuation;
-- M5 is not directly opposite.
+If any pending order is observed on the wrong side of live price:
 
-If proof fades, the pending confirmation must be cancelled while the scout remains protected.
+- Supervisor must show `RECOVERY`.
+- No new order may be created.
+- The stale ticket must be deleted or, if it changes into a position, the full exposure must be closed.
+- If the broker rejects the first cancellation and price later returns to the valid side, the EA must remain in `RECOVERY` and continue deleting it.
+- Supervisor may return to `IDLE` only when positions = 0 and pending = 0.
 
-## Confirmed ladder test
+### D. Scout protection
 
-After Position 2 fills:
+After one scout position reaches the profit-lock trigger:
 
-- both open positions must show the exact same SL;
-- only one future ladder order may exist;
-- no future order may remain when continuation proof fades;
-- a later fill must progress in the correct direction;
-- the full basket must clear when the shared SL is reached.
+- A profitable broker-side SL must appear, or
+- the scout must close while still profitable.
 
-## Dashboard data test
+A frozen or stale pending ticket must not block this protection path.
 
-Confirm the performance section says `MAGIC 2207202631 ONLY`. Old v2.11 results must not appear in the v3.01 statistics.
+### E. Confirmation
 
-## Mandatory v3.01 protection proof
+With one scout position:
 
-Before allowing an unattended demo run, observe at least 10 scout positions that reach the $0.20 profit-lock trigger. For every one of them, confirm one of these two outcomes:
+- At most one pending order may exist.
+- It must be same-direction and comment `EVE33-CONF`.
+- It must expire/remove when proof fades.
 
-1. MT5 shows a broker-side SL above the BUY entry or below the SELL entry; or
-2. the EA immediately closes the scout and reports `PROFIT PROTECTION FALLBACK`.
+### F. Confirmed basket
 
-A frozen pending order must not delay either outcome. In Experts, there must be no sequence where `invalid stops` is followed by the scout remaining open without a profitable SL or urgent-close retries.
+With two or more positions:
+
+- All positions must be the same direction.
+- All positions must show the same shared SL.
+- At most one `EVE33-LAD` pending order may exist.
+
+### G. First-fill slippage
+
+A materially adverse fill beyond the original pending price must produce an execution-integrity event and close the campaign. It must not be adopted as a normal scout or ladder fill.
+
+## Data collection
+
+Run on demo only. Save:
+
+- MT5 HTML report;
+- Experts and Journal around any recovery/fault event;
+- dashboard Baskets, Legs and Orders CSV exports.
+
+Do not consider live funds until these execution tests have passed repeatedly and a statistically meaningful forward-test sample is positive after commission and slippage.

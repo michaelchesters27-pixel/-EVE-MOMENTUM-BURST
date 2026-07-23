@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Static validation for EVE Momentum Burst v3.01."""
+"""Static validation for EVE Momentum Burst v3.02."""
 from __future__ import annotations
 
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "mt5" / "EVE_Momentum_Burst_EA_v3.01.mq5"
+SOURCE = ROOT / "mt5" / "EVE_Momentum_Burst_EA_v3.02.mq5"
 SERVER = ROOT / "railway" / "src" / "server.js"
 APP = ROOT / "railway" / "public" / "app.js"
 PACKAGE = ROOT / "railway" / "package.json"
@@ -177,16 +177,16 @@ def main() -> int:
     if duplicates: fail(f"duplicate function definitions: {duplicates}")
 
     required = {
-        "property": '#property version   "3.01"',
-        "heartbeat version": '\\"version\\":\\"3.01\\"',
+        "property": '#property version   "3.02"',
+        "heartbeat version": '\\"version\\":\\"3.02\\"',
         "heartbeat magic": '\\"magic\\":\\"%I64u\\"',
-        "strategy label": "SCOUT_PROTECTED_LADDER",
-        "magic": "InpMagicNumber                    = 2207202631",
-        "previous magic": "InpLegacyMagicNumber               = 2207202630",
-        "persistent prefix": 'StringFormat("EMB301_%I64d_%I64u_"',
-        "initial comment": 'comment = "EVE32-INIT"',
-        "confirmation comment": 'comment = "EVE32-CONF"',
-        "ladder comment": 'string comment = "EVE32-LAD"',
+        "strategy label": "DETERMINISTIC_SCOUT_LADDER",
+        "magic": "InpMagicNumber                    = 2207202632",
+        "previous magic": "InpLegacyMagicNumber               = 2207202631",
+        "persistent prefix": 'StringFormat("EMB302_%I64d_%I64u_"',
+        "initial comment": 'comment = "EVE33-INIT"',
+        "confirmation comment": 'comment = "EVE33-CONF"',
+        "ladder comment": 'string comment = "EVE33-LAD"',
         "directional scout input": "InpDirectionalScoutOnly",
         "profit lock": "MaintainProvisionalProfitLock",
         "stall exit": "MaintainScoutStallExit",
@@ -200,6 +200,10 @@ def main() -> int:
         "legal target clamp": "ResolveLegalProfitLockTarget",
         "urgent scout exit": "StartUrgentScoutExit",
         "protection request path": "ProtectionRequestAvailable",
+        "strict supervisor": "EnforceExecutionInvariants",
+        "wrong-side detector": "PendingOrderWrongSide",
+        "server expiration": "PendingTimePolicy",
+        "first-fill slippage": "FIRST FILL SLIPPAGE BREACH",
     }
     for label, fragment in required.items(): require(text, fragment, label)
 
@@ -208,6 +212,9 @@ def main() -> int:
         require(moving, fragment, f"moving scout {fragment}")
     if moving.count('PlacePendingOrder(wanted, "INITIAL"') != 1:
         fail("directional mode must place exactly one selected scout stop")
+    for forbidden in ("TWO-SIDED RESEARCH BRACKET", 'PlacePendingOrder(ORDER_TYPE_BUY_STOP, "INITIAL"', 'PlacePendingOrder(ORDER_TYPE_SELL_STOP, "INITIAL"'):
+        if forbidden in moving:
+            fail(f"conflicting two-sided scout path remains: {forbidden}")
 
     provisional = function_body(text, "MaintainProvisionalCampaign")
     for fragment in ("DeleteOneForProvisional", "MaintainProvisionalProfitLock", "MaintainScoutStallExit", "ScoutReadyForConfirmation", "CONFIRMATION PRE-ARM", "PlacePendingOrderExact"):
@@ -249,21 +256,34 @@ def main() -> int:
         for forbidden in ("InpAnalyticsReferenceScore", "buy_score", "sell_score", "score_gap", ".decision"):
             if forbidden in body: fail(f"{name} contains analytics-score dependency: {forbidden}")
 
+    supervisor = function_body(text, "EnforceExecutionInvariants")
+    for fragment in ("WRONG-SIDE PENDING ORDER", "PENDING ROLE DOES NOT MATCH LIVE POSITIONS", "PENDING ORDER STUCK IN TRANSITION", "DeleteSelectedPendingRecovery", "RECOVERY ORDER FILLED OR POSITION APPEARED", "positions == 0 && pending > 0", "supervisor_recovery_ticket > 0"):
+        require(supervisor, fragment, f"supervisor {fragment}")
+    recovery_delete = function_body(text, "DeleteSelectedPendingRecovery")
+    if "supervisor_recovery_reason = StringFormat" in recovery_delete:
+        fail("recovery delete rejection must not recursively grow the persisted recovery reason")
+    freeze = function_body(text, "PendingOrderInsideFreeze")
+    require(freeze, "PendingOrderWrongSide", "wrong-side order cannot be mistaken for freeze")
+    exact = function_body(text, "PlacePendingOrderExact")
+    require(exact, "PendingTimePolicy", "exact pending uses server expiration")
+    normal_pending = function_body(text, "PlacePendingOrder")
+    require(normal_pending, "PendingTimePolicy", "initial pending uses server expiration")
+
     server = SERVER.read_text(encoding="utf-8")
     app = APP.read_text(encoding="utf-8")
     package = PACKAGE.read_text(encoding="utf-8")
-    require(server, "version: '3.0.1'", "Railway version")
-    require(server, "BROKER-LEGAL SCOUT PROFIT PROTECTION + RE-ACCELERATION LADDER", "Railway mode")
+    require(server, "version: '3.0.2'", "Railway version")
+    require(server, "DETERMINISTIC STATE MACHINE + WRONG-SIDE ORDER RECOVERY", "Railway mode")
     require(server, "currentVersionRecords", "current-version performance filtering")
-    require(server, "CURRENT_EA_MAGIC = '2207202631'", "dashboard default current magic")
+    require(server, "CURRENT_EA_MAGIC = '2207202632'", "dashboard default current magic")
     for record_function in ("SendScan", "SendLegRecord", "SendOrderActivity", "SendBankDecision"):
         require(function_body(text, record_function), r'\"magic\":\"%I64u\"', f"{record_function} magic tag")
     require(app, "older bot data is excluded", "dashboard scope message")
-    require(package, '"version": "3.0.1"', "package version")
+    require(package, '"version": "3.0.2"', "package version")
 
     print(f"PASS: {SOURCE.name}")
     print(f"Functions: {len(names)} unique")
-    print("Verified: broker-legal Position 1 SL clamp, protection-first execution ordering, immediate close fallback, directional scout, re-acceleration confirmation, shared SL and current-version dashboard filtering")
+    print("Verified: strict state reconstruction, wrong-side/stale pending recovery, broker-side expiration, first-fill slippage rejection, protection-first execution, directional scout, shared SL and current-version dashboard filtering")
     print("NOTE: MetaEditor compilation is still required.")
     return 0
 

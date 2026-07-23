@@ -1,92 +1,79 @@
-# EVE MOMENTUM BURST v3.01
+# EVE MOMENTUM BURST v3.02
 
-Complete GitHub-ready replacement for v3.00.
+Complete GitHub-ready replacement for v3.01.
 
-## Why v3.01 exists
+## Why v3.02 exists
 
-v3.00 detected the scout profit-lock condition, but a live IC Markets request was rejected as `invalid stops` while a pending-order cancellation was `frozen`. The EA then failed to choose a broker-legal fallback SL or close the profitable scout immediately. v3.01 fixes that exact execution path.
+v3.01 left a SELL STOP at `4051.92` while live XAUUSD Bid/Ask had already fallen to roughly `4043.24 / 4043.33`.
 
-The earlier supplied v2.11 MT5 history was isolated by its `EVE31-*` comments. It contained 55 completed baskets and 70 positions.
+The exact code fault was in the broker-freeze test. For a SELL STOP it used:
 
-The decisive finding was:
+`Bid - order price <= freeze distance`
 
-- 43 one-position baskets: **+$3.70 net**;
-- 12 baskets with two or three positions: **-$8.52 net**;
-- none of the multi-position baskets won;
-- no completed `EVE31-LAD` position appeared in the report.
+After price crossed below the order, that value became negative. A negative value always passed the “inside freeze” test, so the EA could classify a crossed, wrong-side order as permanently frozen and refuse to remove it.
 
-The scout position showed an edge. Adding a second position too easily destroyed it. v3.01 therefore protects the scout first and permits extra size only after the move proves itself again.
+v3.02 fixes that fault and adds a deterministic execution supervisor that rebuilds its state from the actual MT5 positions and orders on every management pass.
 
-See `docs/V2.11-REPORT-ANALYSIS.md` for the complete isolated breakdown.
+## Normal operating model
 
-## v3.01 operating model
+1. Live ticks, M1 ATR and M5 soft bias detect a directional acceleration burst.
+2. One directional scout stop is placed: BUY STOP for a BUY burst or SELL STOP for a SELL burst.
+3. The pending order has a broker-side expiry when IC Markets supports specified expiration.
+4. The first fill becomes the scout and has a real broker-side SL.
+5. Scout profit protection has priority over all pending-order cleanup.
+6. Position 2 is allowed only after protected scout profit and fresh same-direction re-acceleration.
+7. Confirmed positions share one broker-side SL.
+8. Only one future ladder order may exist.
 
-1. The EA watches live broker ticks continuously.
-2. M1 ATR defines what meaningful movement looks like.
-3. M5 supplies a soft directional bias.
-4. A direction-consistent acceleration burst arms **one pending stop only**:
-   - BUY burst → one BUY STOP;
-   - SELL burst → one SELL STOP.
-5. When that order triggers, it becomes the **scout position**.
-6. Every other pending EVE order is removed. The EA never opens an opposite reversal or hedge inside that campaign.
-7. The scout receives a real broker-side SL.
-8. After useful profit appears, its SL dynamically protects about 65% of the best floating profit, subject to broker distance and execution.
-9. If live momentum stalls while useful profit remains, the EA banks the scout instead of waiting for a deeper retracement.
-10. Position 2 is considered only after all of these are true:
-    - scout peak profit is at least $0.60;
-    - estimated current net profit is at least $0.35;
-    - a broker-side profit lock is already active;
-    - price re-accelerates in the same direction;
-    - tick activity expands;
-    - a fresh same-direction micro-break occurs;
-    - M5 is not directly opposite.
-11. Position 2 and the scout share the same broker-side SL.
-12. After confirmation, only one future ladder stop is allowed, and only while the basket is already profitable and price re-accelerates again.
+## Deterministic execution supervisor
 
-## Default protection values
+The supervisor derives one state from live MT5 reality:
 
-- Initial scout SL: `0.75 × M1 ATR`, adjusted for broker rules.
-- Fixed TP: none.
-- Profit-lock trigger: `$0.20` peak.
-- Minimum intended protected net profit: `$0.10`.
-- Profit-lock giveback: `35%`, retaining about `65%` of peak.
-- Momentum-stall bank activates after at least `$0.25` peak and `$0.05` estimated current net.
-- Position 2 proof: `$0.60` peak and `$0.35` estimated current net plus live re-acceleration.
+`IDLE → ARMED → SCOUT → CONFIRMED → EXITING`
 
-These are EA inputs and can be changed later after a meaningful demo sample. They are not controlled by the dashboard analytics score.
+Unsafe reality moves the EA into:
 
-## Execution safety
+`RECOVERY` or `FAULT`
 
-- Position 1 profit protection runs before any pending-order cleanup, freeze wait or legacy cleanup.
-- The requested lock is clamped to the nearest broker-legal price using both stop-level and freeze-level distance plus a safety buffer.
-- If the desired lock is rejected, the EA retries once farther from price.
-- If no profitable legal SL is possible, or the broker rejects both SL attempts, the EA closes Position 1 first and cleans pending orders afterwards.
-- Frozen pending orders cannot block the urgent Position 1 close path.
-- Wide spread removes pending entries but leaves open positions protected.
-- BUY SL watchdog uses Bid.
-- SELL SL watchdog uses Ask.
-- Wrong-sequence or non-progressing fills close the full campaign.
-- Any mixed BUY/SELL state closes the full campaign; no reversal is adopted.
-- A fill whose SL is already invalid closes the campaign.
-- Pending orders are cancelled before forced basket closure.
-- Only one confirmation or ladder pending order may survive.
-- v2.09, v2.10 and v2.11 orders are isolated from v3.01.
-- Railway performance is filtered to v3.01 magic `2207202631`; older dashboard records are excluded.
+It enforces these invariants:
+
+- BUY STOP must remain above live Ask.
+- SELL STOP must remain below live Bid.
+- Flat account permits one `INITIAL` pending order only.
+- One open scout permits one same-side `CONFIRMATION` order only.
+- A confirmed basket permits one same-side `LADDER` order only.
+- Duplicate, unknown-role, stale, stuck-transition or wrong-side orders enter recovery immediately.
+- A wrong-side order is never mistaken for an order inside the freeze zone.
+- Once recovery is latched, deletion continues even if price later moves back to the technically valid side.
+- If a recovery order fills and creates a position, the full campaign is closed rather than adopted.
+- Recovery clears automatically only when MT5 is genuinely flat and contains no EVE v3.02 pending order.
+
+## Additional execution safety
+
+- Pending orders use server-side expiration where supported.
+- First fills are checked against the original planned pending price. Material adverse slippage is an execution-integrity breach and closes the campaign.
+- Position 1 profit protection runs before pending cleanup.
+- A desired profit SL is clamped to a broker-legal level using stop distance, freeze distance, tick size and an extra buffer.
+- If profitable SL protection cannot be placed, Position 1 is closed immediately.
+- Mixed BUY/SELL positions close the full campaign.
+- The old two-sided research fallback is disabled; v3.02 can arm only one directional scout order.
+- Any missing, wrong-side or crossed broker SL triggers full-basket protection.
+- Scores remain analytics only.
 
 ## Version identity
 
-- EA version: `3.01`
-- Railway version: `3.0.1`
-- Magic number: `2207202631`
-- Order comments: `EVE32-INIT`, `EVE32-CONF`, `EVE32-LAD`
-- Persistent state prefix: `EMB301_*`
+- EA version: `3.02`
+- Railway version: `3.0.2`
+- Magic number: `2207202632`
+- Order comments: `EVE33-INIT`, `EVE33-CONF`, `EVE33-LAD`
+- Persistent state prefix: `EMB302_*`
 
 ## Package contents
 
-- `mt5/EVE_Momentum_Burst_EA_v3.01.mq5`
+- `mt5/EVE_Momentum_Burst_EA_v3.02.mq5`
 - `railway/`
 - `supabase/schema.sql`
 - `docs/`
 - `tools/`
 
-MetaEditor is the definitive MQL5 compiler. Compile with **0 errors** and test on the IC Markets demo account before any live consideration.
+MetaEditor is the definitive MQL5 compiler. Compile with **0 errors** and test only on the IC Markets demo account until the mandatory recovery tests in `docs/TESTING.md` have passed live.
