@@ -1,18 +1,14 @@
-EVE MOMENTUM BURST v2.08 — COMPLETE REPLACEMENT
+EVE MOMENTUM BURST v2.09 — COMPLETE REPLACEMENT
 
 1. Keep Algo Trading OFF.
-2. Close all v2.06/v2.07 open positions.
-3. Delete all remaining v2.06/v2.07 pending orders.
-4. Replace the entire GitHub repository with this ZIP.
-5. Wait for Railway to redeploy v2.0.8.
-6. Copy mt5/EVE_Momentum_Burst_EA_v2.08.mq5 into MQL5/Experts.
-7. Compile in MetaEditor and require 0 errors.
-8. Remove v2.06/v2.07 from the chart.
-9. Attach v2.08 to XAUUSD M1.
-10. Enter the Railway URL and bot token.
-11. Turn Algo Trading ON.
-12. Confirm both pending stops and an updating v2.08 heartbeat.
-
-WHY THIS VERSION EXISTS
-
-v2.08 rejects wrong-sequence fills caused by spread/gaps, detects positions left open beyond their displayed SL, cancels pending orders before basket closure, stops stale-ticket delete spam, and keeps the two-sided bracket live during candle refresh.
+2. Close all v2.08 open positions.
+3. Delete all remaining v2.08 pending orders.
+4. Replace the complete GitHub repository with this package.
+5. Wait for Railway to redeploy v2.0.9.
+6. Compile mt5/EVE_Momentum_Burst_EA_v2.09.mq5 with 0 errors.
+7. Remove v2.08 from the chart.
+8. Attach v2.09 to XAUUSD M1.
+9. Enter the Railway URL and bot token.
+10. Turn Algo Trading ON.
+11. Confirm both flat pending stops and an updating v2.09 heartbeat.
+12. After the second same-side fill, confirm every open position has the exact same SL.

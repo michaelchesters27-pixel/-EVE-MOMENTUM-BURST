@@ -1,41 +1,34 @@
-# Demo testing procedure — v2.08
+# Demo testing procedure — v2.09
 
-## Installation test
+## Before testing
 
-1. Compile `mt5/EVE_Momentum_Burst_EA_v2.08.mq5` with 0 errors.
-2. Attach it to XAUUSD M1 on the demo hedging account.
-3. Confirm EA version 2.08 in MT5 and Railway.
-4. Confirm the new magic number is `2207202608`.
+1. Compile `mt5/EVE_Momentum_Burst_EA_v2.09.mq5` with 0 errors.
+2. Use an IC Markets demo hedging account.
+3. Confirm EA version 2.09 in MT5 and Railway.
+4. Confirm no v2.08 position remains.
 
 ## Flat bracket test
 
-- Confirm BUY STOP and SELL STOP are both present.
-- Wait through several new M1 candles.
-- Confirm one side remains live while the other is refreshed; the EA must not remain one-sided.
+Confirm one BUY STOP and one SELL STOP are live. On a new M1 candle, confirm neither side is intentionally left unprotected while the other side refreshes.
 
 ## Provisional test
 
-- First same-side trigger: one position plus two pending directions.
-- Opposite stop remains until the second same-side trigger.
+Allow the first side to trigger. Confirm the opposite stop remains and the second same-side confirmation stop appears.
 
-## Confirmation test
+## Shared-SL test
 
-- A later BUY must fill above the previous BUY.
-- A later SELL must fill below the previous SELL.
-- After a valid second trigger, confirm the opposite stop is removed and the same-side ladder builds.
+Allow the second same-side stop to trigger correctly. Confirm:
 
-## Spread/gap safety test
+- the opposite stop is removed;
+- the newest position receives the calculated shared SL first;
+- every older position is then modified to exactly the same SL price;
+- the dashboard shows that the shared basket SL is armed;
+- the next ladder order is not newly added until synchronisation finishes.
 
-Use Strategy Tester or a controlled demo period to verify:
+## Exit test
 
-- a second BUY filled below/equal to the first BUY triggers `EXECUTION INTEGRITY BREACH`;
-- a second SELL filled above/equal to the first SELL triggers the same;
-- a BUY whose Bid is already at/below its SL is closed;
-- a SELL whose Ask is already at/above its SL is closed;
-- a fill with SL on the wrong side of its actual fill is closed;
-- pending orders are cancelled before basket positions are banked;
-- no repeated invalid cancellation spam occurs for a ticket that has already changed state.
+Reverse price through the shared SL. Confirm all positions close at the shared area, all remaining pending orders are cleared and a fresh candle bracket is created immediately.
 
-## Newest-SL test
+## Spread/gap test
 
-Allow a valid ladder to form, then reverse price through the newest leg SL. Confirm all pending orders disappear and all older positions are closed.
+Confirm a later BUY fill below the previous BUY or a later SELL fill above the previous SELL is rejected and the full campaign is quarantined.

@@ -1,23 +1,18 @@
-# Validation record — v2.08
+# Validation record — v2.09
 
-Completed in this package:
+Automated checks in this package verify:
 
-- balanced MQL5 delimiters and unique function definitions;
-- correct EA property and heartbeat version `2.08`;
-- isolated magic `2207202608` and comments `EVE28-*`;
-- recognised v2.06/v2.07 pending-order cleanup using magic `2207202606`;
-- analytics scores absent from operational straddle/confirmation/ladder functions;
-- later BUY fill progression check;
-- later SELL fill progression check;
-- actual-fill versus inherited-SL validation;
-- Bid/BUY-SL and Ask/SELL-SL watchdog;
-- missing-SL watchdog;
-- pending-first campaign quarantine;
-- stale order-state cancellation refresh;
+- EA property, heartbeat and Railway version `2.09` / `2.0.9`;
+- v2.09 magic `2207202609` and v2.08 isolation magic `2207202608`;
+- new `EVE29-*` order comments and `EMB209_*` persistent state prefix;
+- wrong-sequence fill protection;
+- Bid/Ask crossed-SL watchdogs;
+- shared basket-profit calculation and commission reserve;
+- newest-position-first SL synchronisation;
+- one identical SL across all same-direction positions;
+- no new ladder construction before shared-SL synchronisation;
+- pending-order quarantine before forced position closure;
 - safe two-sided candle refresh;
-- Railway JavaScript syntax checks;
-- Railway automated tests;
-- deterministic execution-safety tests;
-- ZIP integrity and SHA-256 generation.
+- no strategy cooldown, position gate, total-lot gate or session gate.
 
-MetaEditor compilation is not available in this build environment. Compile on the MT5 computer and require 0 errors.
+MetaEditor compilation cannot be performed by the included Python validators and remains mandatory.

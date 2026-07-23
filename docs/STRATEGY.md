@@ -1,54 +1,35 @@
-# Strategy specification — v2.08
+# Strategy specification — v2.09
 
 ## Flat state
 
 The EA maintains one current-candle BUY STOP and one current-candle SELL STOP. At a new M1 candle, it refreshes each side individually while the other side remains live.
 
-## First trigger: provisional 1/2
+## First trigger
 
-If BUY triggers first:
-
-- BUY 1 opens with a broker-side SL;
-- the SELL STOP remains active;
-- BUY STOP 2 is placed higher.
-
-SELL is the exact reverse.
+The first BUY or SELL is provisional. The opposite stop remains live and a second stop is placed in the triggered direction.
 
 If the opposite stop triggers before the second same-side stop, the first breakout failed. The failed side is closed and the newly triggered side becomes provisional.
 
-## Second trigger: direction confirmation
+## Confirmation
 
-A second BUY confirms only when the actual fill is higher than BUY 1. A second SELL confirms only when the actual fill is lower than SELL 1.
+A second BUY confirms only when its actual fill is higher than BUY 1. A second SELL confirms only when its actual fill is lower than SELL 1. A wrong-sequence fill triggers full campaign quarantine and closure.
 
-A spread spike, gap or delayed fill that produces the wrong fill order is not momentum confirmation. It triggers full campaign quarantine and closure.
+## Shared basket SL
 
-## Active ladder
+After confirmation, the EA calculates one SL price from the actual open positions:
 
-After confirmation:
+- BUY basket: shared SL is above the previous BUY entry but below the newest BUY entry;
+- SELL basket: shared SL is below the previous SELL entry but above the newest SELL entry;
+- the calculation includes a minimum net-profit target and a configurable commission reserve;
+- the shared SL never deliberately weakens the most protective existing SL;
+- the newest position is modified first, then every older position receives the exact same SL.
 
-- the opposite pending stop is removed;
-- same-direction pending stops are staged ahead;
-- each fill adds another equal-lot position;
-- the pending ladder is replenished continuously;
-- no fixed TP is used.
+Once every position is synchronised, the ladder continues building.
 
-## Stop-loss geometry
+## Basket exit
 
-Every pending order carries its own broker-side SL.
-
-For confirmation/ladder BUY orders, the newest SL is between the previous BUY trigger and the newest BUY trigger. For SELL orders it is between the previous SELL trigger and newest SELL trigger.
-
-## Full-basket exit
-
-A normal newest-leg broker SL event starts full-basket banking.
-
-The EA also has a quote-side watchdog:
-
-- BUY positions are checked against Bid;
-- SELL positions are checked against Ask.
-
-If the quote has crossed a displayed SL but the position remains open, the EA treats this as an execution-integrity breach. It first cancels all remaining pending orders, then closes every open campaign position.
+Any broker-side SL closure starts full-campaign cleanup. Because all positions share the same SL, they are intended to close together. The EA also watches Bid for BUY positions and Ask for SELL positions. If a position remains open after its SL is crossed, all pending orders are cancelled and the remaining basket is force-closed.
 
 ## No strategy restrictions
 
-The operational state machine does not reference BUY/SELL analytics scores. It has no session filter, news gate, campaign timer, post-campaign cooldown, maximum position count or maximum total-lot gate.
+BUY/SELL analytics scores do not control orders. There is no session filter, campaign timer, post-campaign cooldown, maximum-position gate or maximum-total-lot gate.

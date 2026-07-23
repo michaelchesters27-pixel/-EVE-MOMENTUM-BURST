@@ -1,63 +1,50 @@
-# EVE MOMENTUM BURST v2.08
+# EVE MOMENTUM BURST v2.09
 
-This is the complete GitHub-ready replacement for v2.06/v2.07.
+Complete GitHub-ready replacement for v2.08.
 
-## Exact strategy
+## Trading behaviour
 
-1. While flat, the EA keeps one BUY STOP above price and one SELL STOP below price for the current M1 candle.
-2. The first triggered order starts a provisional direction.
-3. The opposite stop remains active while the EA places the second same-direction stop.
-4. The second same-direction trigger confirms direction only when its actual broker fill progressed correctly:
-   - a later BUY must fill higher than the previous BUY;
-   - a later SELL must fill lower than the previous SELL.
-5. After confirmation, the opposite stop is cancelled and the same-direction stop ladder is replenished continuously.
-6. Every position has its own broker-side SL and no fixed TP.
-7. The newest leg's SL is placed beyond the previous trigger so a normal reversal banks the older positions.
-8. When the newest SL is hit, all pending orders are quarantined/cancelled and the remaining basket is closed.
-9. The EA immediately returns to the current-candle straddle. There is no strategy cooldown.
+1. While flat, every new M1 candle has one BUY STOP above it and one SELL STOP below it.
+2. The first trigger is provisional. The opposite stop remains live.
+3. A second same-direction fill confirms momentum only when it fills farther in the correct direction.
+4. After confirmation, the opposite pending stop is removed.
+5. Same-direction stop orders are staged ahead and replenished continuously.
+6. Every position initially opens with a real broker-side SL.
+7. After two or more same-direction positions exist, the EA calculates one profitable shared basket SL from the actual fills.
+8. The newest position is updated first, then every older position is moved to exactly the same SL price.
+9. The shared SL is calculated to protect at least the configured net basket profit after the configured commission reserve.
+10. When the shared SL is reached, the broker closes the positions and the EA clears any remaining campaign orders before restarting.
 
-## v2.08 execution-safety correction
+## Shared basket SL
 
-v2.08 fixes the exact failure seen during the wide-spread execution:
+For a BUY ladder, the shared SL is above enough older BUY entries to bank their profit but below the newest BUY entry. For a SELL ladder, it is below enough older SELL entries but above the newest SELL entry.
 
-- A BUY fill below/equal to the previous BUY can never confirm a BUY ladder.
-- A SELL fill above/equal to the previous SELL can never confirm a SELL ladder.
-- A fill whose inherited SL is already on the wrong side of the actual fill is rejected as an execution-integrity breach.
-- Every tick checks whether Bid has crossed a BUY SL or Ask has crossed a SELL SL while the position is still open.
-- A missing broker-side SL is treated as an integrity breach after a one-second attachment grace period.
-- Any integrity breach cancels all remaining pending orders and closes the complete campaign.
-- During basket closure, pending orders are cancelled before open positions are banked, preventing another planned ladder leg from joining the exit.
-- If an order changes from pending to filled while cancellation is being requested, the EA refreshes state instead of repeatedly submitting an invalid delete request.
-- On a new candle, the existing two-sided bracket stays live while each side is refreshed individually. The EA no longer deletes both sides first and leaves a prolonged one-sided bracket.
+The EA does not add another new ladder order until the currently open positions are synchronised to the shared SL. Existing broker-side pending orders remain protected by their own attached SLs during fast execution.
 
-These are execution-integrity protections, not momentum filters, trading sessions, position limits or cooldowns.
+## Execution safety retained from v2.08
 
-## 24/5 operation
+- wrong-sequence BUY/SELL fills are rejected;
+- a second BUY must fill higher and a second SELL must fill lower;
+- BUY stop execution is checked against Bid and SELL stop execution against Ask;
+- missing or crossed broker-side SLs trigger campaign quarantine;
+- pending orders are cancelled before forced basket closure;
+- stale pending tickets are refreshed instead of being deleted repeatedly;
+- the two-sided flat bracket is refreshed one side at a time.
 
-There is no automatic momentum-score gate, session filter, campaign-duration gate, daily-loss lock, consecutive-loss lock, position ceiling, total-lot ceiling or strategy cooldown. The EA operates whenever MT5 is connected, Algo Trading is enabled and the broker accepts orders.
+## Version isolation
 
-Manual **Pause**, **Close Basket**, **Emergency Stop** and dashboard Autonomous controls remain available.
+- v2.09 magic number: `2207202609`
+- v2.09 order comments: `EVE29-INIT`, `EVE29-CONF`, `EVE29-LAD`
+- previous v2.08 magic isolated/cleaned: `2207202608`
 
-## Migration safety
+Close any open v2.08 positions before attaching v2.09. Recognised v2.08 pending orders are removed automatically when possible.
 
-- v2.08 magic number: `2207202608`
-- v2.08 order comments: `EVE28-INIT`, `EVE28-CONF`, `EVE28-LAD`
-- previous v2.06/v2.07 magic: `2207202606`
+## Package contents
 
-v2.08 removes recognised v2.06/v2.07 pending EVE orders before starting. It refuses to overlap an open v2.06/v2.07 position. Close old positions first, then attach v2.08.
+- `mt5/EVE_Momentum_Burst_EA_v2.09.mq5` — complete EA source
+- `railway/` — dashboard/API service
+- `supabase/schema.sql` — optional research database schema
+- `docs/` — installation, strategy, testing and validation notes
+- `tools/` — source and deterministic safety validators
 
-## Repository structure
-
-- `mt5/EVE_Momentum_Burst_EA_v2.08.mq5` — complete EA source
-- `railway/` — dashboard, controls, evidence and exports
-- `supabase/schema.sql` — optional permanent database
-- `tools/validate_source.py` — static source/package validator
-- `tools/test_execution_safety.py` — deterministic safety scenarios
-- `docs/INSTALL-EASY.md` — deployment steps
-- `docs/STRATEGY.md` — state machine
-- `docs/TESTING.md` — demo testing procedure
-- `docs/VALIDATION.md` — completed checks
-
-## Required final check
-
-MetaEditor is the definitive MQL5 compiler. Compile `mt5/EVE_Momentum_Burst_EA_v2.08.mq5` with **0 errors** and test on the IC Markets demo account before live use.
+MetaEditor is the definitive MQL5 compiler. Compile the EA with **0 errors** and test it on the IC Markets demo account before any live use.
