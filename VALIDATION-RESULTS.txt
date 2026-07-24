@@ -1,32 +1,12 @@
-EVE MOMENTUM BURST v3.02 VALIDATION RESULTS
+Static validation completed:
+- Balanced braces and parentheses.
+- EA version and filename updated.
+- Individual SL/TP passed to both normal and exact pending-order submission paths.
+- Independent break-even/trailing manager present.
+- Individual SL exit no longer forces basket liquidation.
+- Default maximum positions set to 10.
 
-PASSED
-- Static MQL5 source structure validation
-- Balanced delimiter validation
-- StringFormat placeholder/argument validation
-- 186 unique MQL5 functions; no duplicate definitions
-- Protection-first scout execution ordering checks
-- Broker-legal stop clamp and immediate-close fallback invariants
-- Strict live-state reconstruction and role reconciliation
-- Crossed BUY/SELL stop classification: wrong-side, never freeze
-- Latched recovery continues deleting even if price returns to the valid side
-- Recovery exposure forces full-campaign close
-- Broker-side pending expiration policy with local stale-order fallback
-- First-fill adverse-slippage rejection
-- Single directional scout path only
-- Deterministic strategy/execution checks: 27 passed
-- Railway JavaScript syntax checks
-- Railway automated tests: 5/5 passed
-- Current magic/version dashboard filtering
-
-REQUIRES LOCAL CONFIRMATION
-MetaEditor is the definitive MQL5 compiler. Compile:
-mt5/EVE_Momentum_Burst_EA_v3.02.mq5
-and require 0 errors before attaching it to MT5.
-
-LIVE DEMO PROOF STILL REQUIRED
-- Wrong-side pending order enters RECOVERY and is removed or closed if filled.
-- A rejected cancellation remains in RECOVERY and is retried; it cannot be re-adopted.
-- Scout profit is protected with a legal SL or the scout closes immediately.
-- Recovery clears only at positions 0 / pending 0.
-- No more than one v3.02 pending order exists.
+Not completed in this environment:
+- MetaEditor compilation.
+- Broker Strategy Tester run.
+- Live demo execution test.

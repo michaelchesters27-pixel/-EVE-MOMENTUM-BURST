@@ -1,1 +1,3 @@
-3.02
+EVE Fury Reconstruction Demo v4.00
+Built: 2026-07-24
+Purpose: DEMO-ONLY reconstruction of the observable Markflipper/Fury Flipper behaviour.

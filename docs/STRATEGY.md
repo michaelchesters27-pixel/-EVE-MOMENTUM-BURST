@@ -1,45 +1,30 @@
-# Strategy specification — v3.02
+# EVE Fury Reconstruction Demo v4.00
 
-## 1. Detection
+This is an evidence-based behavioural reconstruction, not Markflipper's proprietary source code.
 
-The EA watches live ticks. M1 ATR defines normal movement and M5 supplies a soft directional bias. Analytics scores are display-only.
+## Trading behaviour
 
-A directional burst requires same-direction 1-second and 3-second velocity, acceleration, tick-rate expansion, a micro-breakout and acceptable spread.
+- XAUUSD M1 tick-burst detection.
+- Chooses one direction from live velocity, acceleration, tick-rate expansion and a micro breakout.
+- Places one stop order in the detected direction.
+- After a fill, keeps one same-direction continuation stop ahead while momentum remains active.
+- Maximum 10 simultaneous positions by default.
+- Every pending order is created with its own broker-side SL and TP.
+- Every open position is managed independently.
+- At 0.30 ATR progress, its SL advances to cost-adjusted break-even.
+- At 0.45 ATR progress, an individual 0.25 ATR trailing stop begins.
+- An individual SL does not automatically liquidate the remaining positions.
+- When momentum fades, future pending orders are cancelled; existing positions remain governed by their own SL/TP.
+- When all positions are closed, the campaign resets and waits for a fresh quiet-reset plus burst.
 
-## 2. Directional scout
+## Default risk geometry
 
-A BUY burst places one BUY STOP. A SELL burst places one SELL STOP. No opposite order is placed, and the legacy setting cannot re-enable a two-sided bracket.
+- Initial SL: 1.20 ATR.
+- TP: 0.80 ATR.
+- Break-even trigger: 0.30 ATR.
+- Trail activation: 0.45 ATR.
+- Trail distance: 0.25 ATR.
+- Fixed lot: 0.01.
+- Maximum positions: 10.
 
-The pending order expires server-side when supported. If it becomes stale, wrong-side, duplicated, stuck in a request state or inconsistent with the live positions, the execution supervisor enters recovery and removes it.
-
-## 3. Scout management
-
-The first fill is the scout. It receives a real broker-side SL and no fixed TP.
-
-After the configured profit trigger, the EA dynamically protects profit. Protection runs before any pending-order cleanup. If the broker cannot accept a profitable legal SL, the scout is closed.
-
-## 4. Confirmation and ladder
-
-Position 2 requires protected scout profit and fresh same-direction re-acceleration. Once confirmed, every position shares one broker-side SL and only one future ladder order can exist.
-
-A later BUY fill must be higher than the previous BUY trigger. A later SELL fill must be lower than the previous SELL trigger.
-
-## 5. Strict state machine
-
-The supervisor reconstructs state from MT5 every pass:
-
-- `IDLE`: no positions, no pending order.
-- `ARMED`: no position, one valid initial pending order.
-- `SCOUT`: one position, zero or one valid same-side confirmation order.
-- `CONFIRMED`: two or more same-side positions, zero or one valid same-side ladder order.
-- `EXITING`: campaign close is active.
-- `RECOVERY`: an order invariant has failed and new entries are blocked.
-- `FAULT`: mixed positions or a recovery order has produced exposure; the basket is closed.
-
-A BUY STOP at or below Ask is wrong-side. A SELL STOP at or above Bid is wrong-side. Wrong-side orders are not treated as frozen. Once recovery starts, it remains latched and keeps removing the ticket even if price later returns to the valid side.
-
-## 6. Exit
-
-The scout can close by initial SL, protected SL, momentum-stall bank, execution-integrity protection or manual/emergency close.
-
-A confirmed basket exits through the shared SL or a full-basket execution-integrity close.
+These are starting hypotheses for demo testing. The videos cannot reveal the original private thresholds, exact filters, or long-term losses.

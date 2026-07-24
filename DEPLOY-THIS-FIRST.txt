@@ -1,24 +1,10 @@
-EVE MOMENTUM BURST v3.02 — COMPLETE REPLACEMENT
+EVE FURY RECONSTRUCTION DEMO v4.00
 
-1. Keep Algo Trading OFF.
-2. Close every old EVE position and delete every old EVE pending order.
-3. Replace the full GitHub repository with this package.
-4. Wait for Railway v3.0.2 to deploy.
-5. Copy mt5/EVE_Momentum_Burst_EA_v3.02.mq5 into MQL5/Experts.
-6. Compile it with 0 errors.
-7. Remove v3.01 from the chart.
-8. Attach v3.02 to XAUUSD M1.
-9. Enter the Railway URL and bot token.
-10. Turn Algo Trading ON.
-11. Wait at least 30 seconds for live-tick warmup.
-12. Confirm the dashboard says magic 2207202632 only.
+1. Deploy the railway folder to the existing Railway service only if you want the dashboard.
+2. In MetaEditor open mt5/EVE_Fury_Reconstruction_Demo_v4.00.mq5.
+3. Press Compile. The source was statically checked here but could not be compiled in MetaEditor in this environment.
+4. Attach it to XAUUSD M1 on a HEDGING demo account.
+5. Enable Algo Trading and allow the Railway WebRequest URL if using the dashboard.
+6. Keep lot size at 0.01 and Maximum Positions at 10 for the first demo run.
 
-MANDATORY DEMO CHECKS BEFORE LEAVING IT UNATTENDED:
-- BUY STOP always remains above Ask.
-- SELL STOP always remains below Bid.
-- A crossed or stale pending order changes the supervisor to RECOVERY and is removed.
-- Recovery returns to IDLE only after positions = 0 and pending = 0.
-- After scout profit-lock eligibility, a profitable legal SL appears or the scout closes.
-- No more than one v3.02 pending order exists.
-
-Do not use real money. MetaEditor compilation and live demo proof are still required.
+DO NOT USE ON A LIVE ACCOUNT.
