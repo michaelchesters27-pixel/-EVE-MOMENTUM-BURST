@@ -1,12 +1,23 @@
-Static validation completed:
-- Balanced braces and parentheses.
-- EA version and filename updated.
-- Individual SL/TP passed to both normal and exact pending-order submission paths.
-- Independent break-even/trailing manager present.
-- Individual SL exit no longer forces basket liquidation.
-- Default maximum positions set to 10.
+EVE Fury Reconstruction Demo v4.10 validation
 
-Not completed in this environment:
+COMPLETED IN THIS ENVIRONMENT
+- MQL5 delimiter balance: PASS
+- MQL5 StringFormat placeholder/argument checks: PASS
+- Unique function definition checks: PASS
+- Legacy v3.02 scout/shared-SL fragment checks: PASS
+- Individual BUY STOP and SELL STOP SL/TP checks: PASS
+- Quiet-reset and stronger opposite-direction confirmation checks: PASS
+- Freeze-zone-aware pending cancellation checks: PASS
+- Individual break-even/trailing protection checks: PASS
+- Deterministic behavioural safety tests: 16 PASS
+- Railway Node test suite: 5 PASS
+- Railway JavaScript syntax checks: PASS
+- Local Railway health/heartbeat/state integration test: PASS
+- Railway identifies version 4.1.0, EA 4.10 and magic 2407202641: PASS
+
+NOT AVAILABLE IN THIS ENVIRONMENT
 - MetaEditor compilation.
-- Broker Strategy Tester run.
-- Live demo execution test.
+- IC Markets Strategy Tester execution.
+- Live demo broker execution.
+
+Do not attach the EA unless MetaEditor compiles it with 0 errors. Demo only.

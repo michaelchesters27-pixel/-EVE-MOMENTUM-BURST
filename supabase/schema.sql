@@ -1,4 +1,4 @@
--- EVE Momentum Burst v3.02 optional permanent research database
+-- EVE Fury Reconstruction Demo v4.10 optional permanent research database
 -- Run once in Supabase SQL Editor, then add SUPABASE_URL and
 -- SUPABASE_SERVICE_ROLE_KEY to Railway Variables.
 

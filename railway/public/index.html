@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>EVE Momentum Burst v3.02</title>
+  <title>EVE Fury Reconstruction Demo v4.10</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
     <div>
       <p class="eyebrow">XAUUSD • TICK-BY-TICK EXECUTION • M1 VOLATILITY • M5 SOFT BIAS</p>
       <h1>EVE MOMENTUM BURST</h1>
-      <p class="subtitle">The EA waits for genuine live acceleration, then arms one directional scout stop only. The scout banks on protected profit or momentum stall. Position 2 is allowed only after the scout proves itself and live price re-accelerates; confirmed positions then share one broker-side SL.</p>
+      <p class="subtitle">The EA waits for a confirmed live momentum burst, arms one continuation stop, and adds same-direction positions only while momentum persists. Every position receives its own broker-side stop loss and take profit.</p>
     </div>
     <span id="systemBadge" class="badge neutral">CONNECTING</span>
   </header>
@@ -27,7 +27,7 @@
     <article class="card"><p class="label">RAILWAY</p><strong id="railway">—</strong><span id="version">v—</span></article>
     <article class="card"><p class="label">MT5 EA</p><strong id="eaStatus">—</strong><span id="eaDetail">Waiting</span></article>
     <article class="card"><p class="label">ENGINE STATE</p><strong id="engineState">—</strong><span id="engineDetail">No heartbeat</span></article>
-    <article class="card"><p class="label">ANALYTICS ONLY</p><strong id="momentumState">—</strong><span id="momentumDetail">Does not control orders</span></article>
+    <article class="card"><p class="label">MOMENTUM ENGINE</p><strong id="momentumState">—</strong><span id="momentumDetail">Controls burst entries</span></article>
   </section>
 
   <section class="panel">
@@ -37,10 +37,10 @@
     </div>
     <div id="blockReason" class="notice">Waiting for EA data.</div>
     <div class="score-grid eight">
-      <article><span>Scout / basket direction</span><strong id="watchDirection">—</strong></article>
-      <article><span>BUY analytics only</span><strong id="buyScore">0/11</strong></article>
-      <article><span>SELL analytics only</span><strong id="sellScore">0/11</strong></article>
-      <article><span>Scout order state</span><strong id="bracketState">—</strong></article>
+      <article><span>Campaign direction</span><strong id="watchDirection">—</strong></article>
+      <article><span>BUY momentum score</span><strong id="buyScore">0/7</strong></article>
+      <article><span>SELL momentum score</span><strong id="sellScore">0/7</strong></article>
+      <article><span>Pending order state</span><strong id="bracketState">—</strong></article>
       <article><span>BUY STOP</span><strong id="buyStop">—</strong></article>
       <article><span>SELL STOP</span><strong id="sellStop">—</strong></article>
       <article><span>1s / 3s velocity</span><strong id="velocities">—</strong></article>
@@ -63,27 +63,27 @@
       <label><span>Equity for each 0.01 lot</span><input id="equityPer001Lot" type="number" min="10" step="10"></label>
     </div>
     <div class="buttons"><button id="applySettings" class="positive">Apply lot settings</button></div>
-    <p id="operatingModeNotice" class="notice">24/5 live tick-burst engine: scores are display-only. No candle opening forces a trade. The EA arms only after direction-consistent acceleration, tick expansion and a micro-breakout. Wide-spread safety removes pending entries while open positions retain broker-side protection.</p>
+    <p id="operatingModeNotice" class="notice">24/5 live tick-burst engine: scores drive the burst decision. No candle opening forces a trade. The EA arms only after direction-consistent acceleration, tick expansion and a micro-breakout. Wide-spread safety removes pending entries while open positions retain broker-side protection.</p>
   </section>
 
   <section class="two-col">
     <article class="panel">
-      <p class="eyebrow">ACTIVE SCOUT / MOMENTUM BASKET</p>
+      <p class="eyebrow">ACTIVE MOMENTUM CAMPAIGN</p>
       <div class="position-head"><h2 id="basketTitle">NONE</h2><span id="basketState" class="badge neutral">IDLE</span></div>
       <div id="floatingProfit" class="position-profit">$0.00</div>
       <div class="kv-grid">
         <div><span>Positions / pending</span><strong id="positionCounts">0 / 0</strong></div>
         <div><span>Total lots</span><strong id="totalLots">0.00</strong></div>
         <div><span>Average entry</span><strong id="averageEntry">—</strong></div>
-        <div><span>Protected / shared SL</span><strong id="protectedStop">—</strong></div>
+        <div><span>Individual SL/TP mode</span><strong id="protectedStop">ACTIVE</strong></div>
         <div><span>Peak basket profit</span><strong id="peakProfit">$0.00</strong></div>
         <div><span>Worst floating P/L</span><strong id="basketMae">$0.00</strong></div>
         <div><span>Newest ticket</span><strong id="newestTicket">—</strong></div>
         <div><span>Newest current / peak</span><strong id="newestProfit">—</strong></div>
         <div><span>Newest age</span><strong id="newestAge">—</strong></div>
-        <div><span>Broker-side exit protection</span><strong id="bankCandidate">NO</strong></div>
+        <div><span>Individual broker protection</span><strong id="bankCandidate">NO</strong></div>
       </div>
-      <div id="bankReason" class="notice">Waiting for a triggered position.</div>
+      <div id="bankReason" class="notice">Every position uses its own broker-side SL and TP.</div>
       <div id="closeInfo" class="notice">No close pending.</div>
       <div class="buttons"><button data-action="CLOSE_BASKET">Close full basket</button><button data-action="EMERGENCY_STOP" class="danger">Emergency stop</button><button data-action="RESET_EMERGENCY">Reset emergency</button></div>
     </article>

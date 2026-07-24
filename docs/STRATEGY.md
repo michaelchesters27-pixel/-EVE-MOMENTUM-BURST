@@ -1,30 +1,46 @@
-# EVE Fury Reconstruction Demo v4.00
+# Strategy — v4.10
 
-This is an evidence-based behavioural reconstruction, not Markflipper's proprietary source code.
+This is an evidence-based behavioural reconstruction, not the original proprietary EA.
 
-## Trading behaviour
+## Entry
 
-- XAUUSD M1 tick-burst detection.
-- Chooses one direction from live velocity, acceleration, tick-rate expansion and a micro breakout.
-- Places one stop order in the detected direction.
-- After a fill, keeps one same-direction continuation stop ahead while momentum remains active.
-- Maximum 10 simultaneous positions by default.
-- Every pending order is created with its own broker-side SL and TP.
-- Every open position is managed independently.
-- At 0.30 ATR progress, its SL advances to cost-adjusted break-even.
-- At 0.45 ATR progress, an individual 0.25 ATR trailing stop begins.
-- An individual SL does not automatically liquidate the remaining positions.
-- When momentum fades, future pending orders are cancelled; existing positions remain governed by their own SL/TP.
-- When all positions are closed, the campaign resets and waits for a fresh quiet-reset plus burst.
+- Reads live XAUUSD ticks on M1.
+- Scores price velocity over 1, 3 and 10 seconds, tick-rate expansion, acceleration, M1 body strength and a micro breakout.
+- A signal must remain present for 400 ms before the first continuation stop is armed.
+- Only one directional pending stop exists at a time.
 
-## Default risk geometry
+## Adding positions
+
+- After a fill, one same-direction continuation stop is maintained ahead of price.
+- New positions are added only while same-direction momentum remains supportive.
+- The campaign stops adding immediately when momentum fades or strong opposite pressure appears.
+- Existing positions remain open and are managed independently.
+
+## Individual protection
+
+Every position receives:
 
 - Initial SL: 1.20 ATR.
-- TP: 0.80 ATR.
-- Break-even trigger: 0.30 ATR.
-- Trail activation: 0.45 ATR.
-- Trail distance: 0.25 ATR.
-- Fixed lot: 0.01.
-- Maximum positions: 10.
+- Initial TP: 1.00 ATR.
+- Break-even trigger: 0.45 ATR.
+- Break-even buffer: spread plus a small ATR allowance.
+- Trailing activation: 0.75 ATR.
+- Trailing distance: 0.35 ATR.
 
-These are starting hypotheses for demo testing. The videos cannot reveal the original private thresholds, exact filters, or long-term losses.
+Stops only tighten; they never move backwards.
+
+## Direction reversal protection
+
+- No BUY campaign can become a SELL campaign while any BUY position or pending order remains, and vice versa.
+- When a completed campaign becomes flat, the engine requires a quiet reset for 1.2 seconds.
+- A new campaign in the opposite direction requires a stronger score and a one-second held signal.
+
+## Capital limits
+
+- Fixed lot: 0.01 by default.
+- Maximum simultaneous positions: 10.
+- Maximum total lots: 0.10.
+- Emergency floating loss: 1.5% of balance.
+- Daily realised loss lock: 4%.
+
+These are conservative demo starting values, not proof of profitability.

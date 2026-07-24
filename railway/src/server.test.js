@@ -15,12 +15,12 @@ test('performance includes detailed basket metrics', () => {
   assert.equal(result.byBankReason.length, 2);
 });
 
-test('settings keep lot controls but disable strategy ceilings', () => {
+test('settings keep lot controls and publish demo ceilings', () => {
   const s = validateSettings({ fixedLot: 0, initialPositions: 50, maxPositions: 4, maxTotalLots: .001 }, DEFAULT_SETTINGS);
   assert.equal(s.fixedLot, .01);
   assert.equal(s.initialPositions, 1);
-  assert.equal(s.maxPositions, 0);
-  assert.equal(s.maxTotalLots, 0);
+  assert.equal(s.maxPositions, 10);
+  assert.equal(s.maxTotalLots, 0.10);
   assert.equal(s.testingMode, true);
 });
 
@@ -36,7 +36,7 @@ test('server constructs', () => {
 test('current EA magic excludes older bot records', () => {
   const records = [
     { id: 'old', magic: '2207202630', netProfit: 99 },
-    { id: 'current', magic: '2207202632', netProfit: 1.25 },
+    { id: 'current', magic: '2407202641', netProfit: 1.25 },
     { id: 'missing', netProfit: 5 }
   ];
   assert.deepEqual(filterRecordsByMagic(records).map(item => item.id), ['current']);

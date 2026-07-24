@@ -1,10 +1,18 @@
-EVE FURY RECONSTRUCTION DEMO v4.00
+EVE FURY RECONSTRUCTION DEMO v4.10
 
-1. Deploy the railway folder to the existing Railway service only if you want the dashboard.
-2. In MetaEditor open mt5/EVE_Fury_Reconstruction_Demo_v4.00.mq5.
-3. Press Compile. The source was statically checked here but could not be compiled in MetaEditor in this environment.
-4. Attach it to XAUUSD M1 on a HEDGING demo account.
-5. Enable Algo Trading and allow the Railway WebRequest URL if using the dashboard.
-6. Keep lot size at 0.01 and Maximum Positions at 10 for the first demo run.
+1. Turn Algo Trading OFF.
+2. Remove the faulty v4.00 EA from XAUUSD M1.
+3. Confirm there are no old EVE positions or pending orders.
+4. Replace the complete GitHub repository contents with this package.
+5. In Railway, keep the service Root Directory set to railway and the start command as npm start.
+6. Wait until the Railway page shows v4.1.0 and INDIVIDUAL SL/TP MOMENTUM LADDER.
+7. Copy mt5/EVE_Fury_Reconstruction_Demo_v4.10.mq5 to MQL5/Experts.
+8. Open it in MetaEditor and press Compile. Do not continue unless MetaEditor reports 0 errors.
+9. In MT5: Tools > Options > Expert Advisors > Allow WebRequest for listed URL, then add your Railway base URL.
+10. Attach v4.10 to XAUUSD M1 on a HEDGING demo account.
+11. Enter the exact Railway URL and BOT_TOKEN in the EA inputs.
+12. Keep the first test at 0.01 lot and maximum 10 positions.
+13. Turn Algo Trading ON.
+14. Confirm the chart says v4.10 and the Railway dashboard receives a fresh heartbeat.
 
 DO NOT USE ON A LIVE ACCOUNT.

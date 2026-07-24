@@ -12,7 +12,7 @@ const SUPABASE_URL = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SUPABASE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 const EA_DELAYED_MS = 45_000;
 const EA_OFFLINE_MS = 120_000;
-const CURRENT_EA_MAGIC = '2207202632';
+const CURRENT_EA_MAGIC = '2407202641';
 const MAX = { scans: 40_000, baskets: 5_000, legs: 30_000, orders: 30_000, banks: 10_000, events: 5_000 };
 
 export const nowIso = () => new Date().toISOString();
@@ -66,8 +66,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   useEquityScaling: false,
   equityPer001Lot: 1000,
   initialPositions: 1,
-  maxPositions: 0,
-  maxTotalLots: 0
+  maxPositions: 10,
+  maxTotalLots: 0.10
 });
 
 export function validateSettings(input = {}, current = DEFAULT_SETTINGS) {
@@ -79,15 +79,15 @@ export function validateSettings(input = {}, current = DEFAULT_SETTINGS) {
     useEquityScaling: input.useEquityScaling === undefined ? Boolean(current.useEquityScaling) : Boolean(input.useEquityScaling),
     equityPer001Lot: clamp(safeNumber(input.equityPer001Lot, current.equityPer001Lot), 10, 10_000_000),
     initialPositions: 1,
-    maxPositions: 0,
-    maxTotalLots: 0
+    maxPositions: 10,
+    maxTotalLots: 0.10
   };
   return next;
 }
 let settings = validateSettings(loadJson(files.settings, DEFAULT_SETTINGS));
 
 const state = {
-  version: '3.0.2', service: 'EVE MOMENTUM BURST', mode: 'DETERMINISTIC STATE MACHINE + WRONG-SIDE ORDER RECOVERY', startedAt: nowIso(),
+  version: '4.1.0', service: 'EVE FURY RECONSTRUCTION DEMO', mode: 'INDIVIDUAL SL/TP MOMENTUM LADDER', startedAt: nowIso(),
   control: { autonomous: String(process.env.AUTO_ENABLED || 'true').toLowerCase() !== 'false', emergency: false, manualNewsLock: false },
   command: { id: 0, action: 'NONE', createdAt: nowIso(), consumedAt: null, result: null },
   ea: {

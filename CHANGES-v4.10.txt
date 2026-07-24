@@ -1,0 +1,19 @@
+FIXES IN v4.10
+
+1. Clean engine replacement
+   The old v3.02 deterministic scout/shared-SL engine is not used.
+
+2. Individual protection
+   Every pending order is submitted with its own SL and TP. Filled positions restore missing protection, move toward break-even, and trail independently.
+
+3. No premature direction flip
+   An active campaign cannot reverse. After flat, a quiet reset is mandatory. The opposite direction needs a stronger score held for longer.
+
+4. Broker-valid pending orders
+   Pending stops are GTC only. No expiry timestamp is sent.
+
+5. Safer cancellation
+   Orders are reselected before deletion, freeze-zone cancellations are deferred, and a fill during cancellation is accepted and protected instead of treated as a fatal state error.
+
+6. Railway stability
+   Heartbeat and command polling are rate-limited. Basket reports are low-frequency. HTTP failures use exponential backoff instead of flooding Railway.

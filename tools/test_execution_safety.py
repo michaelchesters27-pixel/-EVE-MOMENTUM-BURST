@@ -1,100 +1,72 @@
 #!/usr/bin/env python3
-"""Deterministic strategy and broker-protection checks for v3.02."""
+"""Deterministic behavioural checks for v4.10."""
 from __future__ import annotations
 
 
-def directional_burst(side: str, v1: float, v3: float, acceleration: float, ticks: float, micro_break: bool) -> bool:
-    direction = (v1 >= .025 and v3 >= .012) if side == "BUY" else (v1 <= -.025 and v3 <= -.012)
-    return direction and acceleration >= 1.12 and ticks >= 1.18 and micro_break
+def score_signal(v1: float, v3: float, v10: float, tick_ratio: float, acceleration: float, micro_break: bool, body: float, side: str) -> int:
+    sign = 1 if side == "BUY" else -1
+    score = 0
+    score += sign * v1 >= 0.040
+    score += sign * v3 >= 0.070
+    score += sign * v10 >= 0.100
+    score += tick_ratio >= 1.10
+    score += acceleration >= 1.05 and sign * v1 > 0
+    score += micro_break
+    score += sign * body >= 0.08
+    return int(score)
 
 
-def protected_net(peak: float, minimum: float = .10, giveback_percent: float = 35.0) -> float | None:
-    if peak < .20:
-        return None
-    return max(minimum, peak * (1 - giveback_percent / 100))
+def opposite_allowed(last_side: str, new_side: str, quiet_reset: bool, score: int, held_ms: int) -> bool:
+    if not quiet_reset:
+        return False
+    if last_side != "NONE" and new_side != last_side:
+        return score >= 6 and held_ms >= 1000
+    return score >= 5 and held_ms >= 400
 
 
-def legal_lock(side: str, desired: float, bid: float, ask: float, distance: float, entry: float) -> float | None:
-    boundary = bid - distance if side == "BUY" else ask + distance
-    target = min(desired, boundary) if side == "BUY" else max(desired, boundary)
-    if side == "BUY" and target <= entry:
-        return None
-    if side == "SELL" and target >= entry:
-        return None
-    return target
+def legal_stop(side: str, desired: float, bid: float, ask: float, minimum: float) -> float:
+    return min(desired, bid - minimum) if side == "BUY" else max(desired, ask + minimum)
 
 
-def reacceleration(side: str, peak: float, current_net: float, locked: bool, v1: float, v3: float, acceleration: float, ticks: float, micro_break: bool, m5: str) -> bool:
-    direction = (v1 >= .018 and v3 >= .010) if side == "BUY" else (v1 <= -.018 and v3 <= -.010)
-    return peak >= .60 and current_net >= .35 and locked and direction and acceleration >= 1.05 and ticks >= 1.05 and micro_break and m5 != ("SELL" if side == "BUY" else "BUY")
+def better_stop(side: str, old: float, candidate: float) -> float:
+    if old <= 0:
+        return candidate
+    return max(old, candidate) if side == "BUY" else min(old, candidate)
 
 
+def cancel_action(order_exists: bool, active_state: bool, in_freeze: bool) -> str:
+    if not order_exists or not active_state:
+        return "CLEAR"
+    if in_freeze:
+        return "DEFER"
+    return "DELETE"
 
-def pending_relation(side: str, price: float, bid: float, ask: float, freeze: float, buffer: float) -> str:
-    wrong = price <= ask if side == "BUY" else price >= bid
-    if wrong:
-        return "WRONG_SIDE"
-    gap = price - ask if side == "BUY" else bid - price
-    return "IN_FREEZE" if gap <= freeze + buffer else "VALID_AHEAD"
-
-
-
-def recovery_decision(latched: bool, positions: int, pending: int) -> str:
-    if not latched:
-        return "NORMAL"
-    if positions > 0:
-        return "CLOSE_EXPOSURE"
-    if pending > 0:
-        return "RETRY_DELETE"
-    return "CLEAR_RECOVERY"
-
-def first_fill_safe(side: str, planned: float, filled: float, allowed: float) -> bool:
-    adverse = filled - planned if side == "BUY" else planned - filled
-    return adverse <= allowed + 1e-12
 
 def main() -> None:
     checks = 0
-    assert directional_burst("BUY", .04, .02, 1.5, 1.3, True); checks += 1
-    assert not directional_burst("BUY", .04, -.02, 1.5, 1.3, True); checks += 1
-    assert directional_burst("SELL", -.04, -.02, 1.5, 1.3, True); checks += 1
-    assert not directional_burst("SELL", -.04, .02, 1.5, 1.3, True); checks += 1
+    buy = score_signal(.06, .10, .15, 1.3, 1.4, True, .12, "BUY")
+    sell = score_signal(.06, .10, .15, 1.3, 1.4, False, .12, "SELL")
+    assert buy >= 5 and sell < buy; checks += 1
 
-    assert protected_net(.19) is None; checks += 1
-    assert abs(protected_net(.20) - .13) < 1e-9; checks += 1
-    assert abs(protected_net(1.00) - .65) < 1e-9; checks += 1
+    assert not opposite_allowed("SELL", "BUY", False, 7, 5000); checks += 1
+    assert not opposite_allowed("SELL", "BUY", True, 5, 1500); checks += 1
+    assert not opposite_allowed("SELL", "BUY", True, 7, 999); checks += 1
+    assert opposite_allowed("SELL", "BUY", True, 7, 1000); checks += 1
+    assert opposite_allowed("BUY", "BUY", True, 5, 400); checks += 1
 
-    # Desired BUY SL is too close to Bid; clamp farther away while keeping it profitable.
-    assert abs(legal_lock("BUY", 100.80, bid=100.90, ask=100.92, distance=.20, entry=100.00) - 100.70) < 1e-9; checks += 1
-    # Desired SELL SL is too close to Ask; clamp farther away while keeping it profitable.
-    assert abs(legal_lock("SELL", 99.20, bid=99.08, ask=99.10, distance=.20, entry=100.00) - 99.30) < 1e-9; checks += 1
-    # No legal profitable broker SL exists: the live EA must use immediate-close fallback.
-    assert legal_lock("BUY", 100.05, bid=100.10, ask=100.12, distance=.20, entry=100.00) is None; checks += 1
-    assert legal_lock("SELL", 99.95, bid=99.88, ask=99.90, distance=.20, entry=100.00) is None; checks += 1
+    assert better_stop("BUY", 100.0, 100.5) == 100.5; checks += 1
+    assert better_stop("BUY", 100.5, 100.2) == 100.5; checks += 1
+    assert better_stop("SELL", 100.0, 99.5) == 99.5; checks += 1
+    assert better_stop("SELL", 99.5, 99.8) == 99.5; checks += 1
+    assert legal_stop("BUY", 100.8, 100.9, 100.92, .2) == 100.7; checks += 1
+    assert legal_stop("SELL", 99.2, 99.08, 99.10, .2) == 99.3; checks += 1
 
-    assert reacceleration("BUY", .80, .50, True, .03, .015, 1.2, 1.2, True, "BUY"); checks += 1
-    assert not reacceleration("BUY", .40, .38, True, .03, .015, 1.2, 1.2, True, "BUY"); checks += 1
-    assert not reacceleration("BUY", .80, .50, False, .03, .015, 1.2, 1.2, True, "BUY"); checks += 1
-    assert not reacceleration("BUY", .80, .50, True, .01, .005, 1.2, 1.2, True, "BUY"); checks += 1
-    assert not reacceleration("BUY", .80, .50, True, .03, .015, 1.2, 1.2, True, "SELL"); checks += 1
+    assert cancel_action(False, True, False) == "CLEAR"; checks += 1
+    assert cancel_action(True, False, False) == "CLEAR"; checks += 1
+    assert cancel_action(True, True, True) == "DEFER"; checks += 1
+    assert cancel_action(True, True, False) == "DELETE"; checks += 1
 
-    # A crossed SELL STOP must be classified as wrong-side, never as permanently frozen.
-    assert pending_relation("SELL", 4051.92, bid=4043.24, ask=4043.33, freeze=.20, buffer=.10) == "WRONG_SIDE"; checks += 1
-    assert pending_relation("BUY", 4040.00, bid=4043.24, ask=4043.33, freeze=.20, buffer=.10) == "WRONG_SIDE"; checks += 1
-    assert pending_relation("SELL", 4043.10, bid=4043.24, ask=4043.33, freeze=.10, buffer=.05) == "IN_FREEZE"; checks += 1
-    assert pending_relation("SELL", 4042.50, bid=4043.24, ask=4043.33, freeze=.10, buffer=.05) == "VALID_AHEAD"; checks += 1
-
-    assert first_fill_safe("BUY", 100.00, 100.20, .30); checks += 1
-    assert not first_fill_safe("BUY", 100.00, 100.50, .30); checks += 1
-    assert first_fill_safe("SELL", 100.00, 99.80, .30); checks += 1
-    assert not first_fill_safe("SELL", 100.00, 99.50, .30); checks += 1
-
-    # Once recovery is latched, a failed deletion is retried even if price later returns
-    # to the valid side; exposure closes, and only a genuinely flat/order-free state clears it.
-    assert recovery_decision(True, 0, 1) == "RETRY_DELETE"; checks += 1
-    assert recovery_decision(True, 1, 0) == "CLOSE_EXPOSURE"; checks += 1
-    assert recovery_decision(True, 0, 0) == "CLEAR_RECOVERY"; checks += 1
-
-    print(f"PASS: {checks} deterministic v3.02 checks")
+    print(f"PASS: {checks} v4.10 deterministic safety checks")
 
 
 if __name__ == "__main__":

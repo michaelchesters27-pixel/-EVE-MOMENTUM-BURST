@@ -1,79 +1,51 @@
-# Demo testing procedure — v3.02
+# Demo testing procedure — v4.10
 
 ## Installation proof
 
-1. Keep Algo Trading OFF.
-2. Remove all old EVE positions and pending orders.
-3. Compile `mt5/EVE_Momentum_Burst_EA_v3.02.mq5` with 0 errors.
-4. Attach v3.02 to XAUUSD M1.
-5. Confirm chart/dashboard version `3.02`, Railway `3.0.2`, magic `2207202632`.
-6. Turn Algo Trading ON.
+1. Compile with 0 MetaEditor errors.
+2. Attach to XAUUSD M1 on a hedging demo account.
+3. Confirm chart version `4.10`, Railway `4.1.0`, magic `2407202641`.
+4. Confirm Railway heartbeat changes from OFFLINE to CONNECTED.
 
-## Mandatory live-state tests
+## Mandatory checks
 
-### A. Flat state
+### Flat state
 
-Expected:
+- No position and no pending order unless a live burst is confirmed.
+- Engine reads `WAITING FOR BURST` or `WAITING FOR QUIET RESET`.
 
-- Supervisor: `IDLE` while no burst exists.
-- Positions: 0.
-- Pending: 0.
+### First order
 
-### B. Armed state
+- Exactly one BUY STOP or SELL STOP.
+- BUY STOP is above Ask; SELL STOP is below Bid.
+- The order uses GTC and has its own SL and TP.
 
-When a burst arms a scout:
+### Filled position
 
-- Supervisor: `ARMED`.
-- Exactly one pending order.
-- BUY STOP must be above Ask.
-- SELL STOP must be below Bid.
-- Order role/comment must be `EVE33-INIT`.
+- The position retains a broker-side SL and TP.
+- No opposite-direction pending order is created.
 
-### C. Wrong-side recovery
+### Momentum ladder
 
-If any pending order is observed on the wrong side of live price:
+- At most one same-direction continuation pending order is ahead.
+- Every newly filled position has its own SL and TP.
+- The maximum position and total-lot limits are respected.
 
-- Supervisor must show `RECOVERY`.
-- No new order may be created.
-- The stale ticket must be deleted or, if it changes into a position, the full exposure must be closed.
-- If the broker rejects the first cancellation and price later returns to the valid side, the EA must remain in `RECOVERY` and continue deleting it.
-- Supervisor may return to `IDLE` only when positions = 0 and pending = 0.
+### Momentum fade
 
-### D. Scout protection
+- Future pending additions are cancelled or safely deferred if inside the broker freeze zone.
+- Existing positions are not force-closed merely because adding stopped.
 
-After one scout position reaches the profit-lock trigger:
+### Direction change
 
-- A profitable broker-side SL must appear, or
-- the scout must close while still profitable.
+- No opposite campaign starts while exposure remains.
+- After the campaign finishes, the engine waits for quiet reset.
+- Opposite direction requires the stronger held-signal rule.
 
-A frozen or stale pending ticket must not block this protection path.
+### Railway
 
-### E. Confirmation
+- Heartbeat is sent at the configured interval, not continuously.
+- Failed HTTP requests back off instead of flooding the service.
+- Dashboard reports EA 4.10 and the new strategy label.
 
-With one scout position:
-
-- At most one pending order may exist.
-- It must be same-direction and comment `EVE33-CONF`.
-- It must expire/remove when proof fades.
-
-### F. Confirmed basket
-
-With two or more positions:
-
-- All positions must be the same direction.
-- All positions must show the same shared SL.
-- At most one `EVE33-LAD` pending order may exist.
-
-### G. First-fill slippage
-
-A materially adverse fill beyond the original pending price must produce an execution-integrity event and close the campaign. It must not be adopted as a normal scout or ladder fill.
-
-## Data collection
-
-Run on demo only. Save:
-
-- MT5 HTML report;
-- Experts and Journal around any recovery/fault event;
-- dashboard Baskets, Legs and Orders CSV exports.
-
-Do not consider live funds until these execution tests have passed repeatedly and a statistically meaningful forward-test sample is positive after commission and slippage.
+Save the MT5 HTML report plus Experts and Journal screenshots for every execution fault. Do not consider live funds without a substantial positive forward-test sample after spread, commission and slippage.
